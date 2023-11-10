@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     print(f"Running with strength={args.strength}, cfg={args.cfg}, prompt={prompt}, nprompt={nprompt}")
 
-    test_ds = NoisyDataset(root_path=args.directory, split="test", crop_size=None, flipx=None, flipy=None)
+    test_ds = NoisyDataset(root_path=args.directory, split="test", transform=None)
 
     sd = diffusers.StableDiffusionImg2ImgPipeline.from_pretrained(
         args.model,

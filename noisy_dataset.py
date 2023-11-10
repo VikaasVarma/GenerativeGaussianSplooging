@@ -11,17 +11,34 @@ import shutil
 from tqdm import tqdm
 
 
+# Flips, crops and changes hue
+def get_transform(size=512, crop_size=0.4):
+    t = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomResizedCrop(size=size, scale=(crop_size, 1.0))
+    ])
+
+    def transform(xs):
+        xs = t(xs)
+        hf = torch.rand(size=()) - 0.5
+        return trf.adjust_hue(xs, hue_factor=hf)
+
+    return transform
+
+
 class NoisyDataset(dutils.Dataset):
     """
     Indexing gives (ground truth, rendered) Tensor pairs.
     Data augmentation: gives option to crop, flip.
     """
 
-    def __init__(self, root_path: str, split: str, crop_size=(512, 512), flipx=True, flipy=True):
+    def __init__(self, root_path: str, split: str, return_all=False, transform=None):
         self.root_path = join(root_path, split)
-        self.crop_size = crop_size
-        self.flipx = flipx
-        self.flipy = flipy
+        self.return_all = return_all
+        self.transform = transform if transform is not None else transforms.ToTensor()
+        self.split = split
 
         assert os.path.isdir(self.root_path)
 
@@ -51,46 +68,33 @@ class NoisyDataset(dutils.Dataset):
         return len(self.gt_paths)
 
     def __getitem__(self, item):
-        """Returns (gt, im) both of shape 3 x H x W where (H, W) = self.crop_size."""
-        rp = self.render_paths[item][torch.randint(0, self.n, ())]
+        """Returns (gt, rendered_im) both of shape 3 x H x W where (H, W) = self.crop_size."""
         gp = self.gt_paths[item]
 
-        tot = transforms.ToTensor()
-        rim = tot(Image.open(rp))
-        gim = tot(Image.open(gp))
+        state = torch.get_rng_state()
+        gim = self.transform(Image.open(gp))
 
-        assert rim.shape == gim.shape
+        if self.return_all:
+            rims = []
+            for rp in self.render_paths[item]:
+                torch.set_rng_state(state)
+                rim = self.transform(Image.open(rp))
+                rims.append(rim)
+            return tuple(rims), gim
+        else:
+            ind = item % self.n if self.split == "test" else torch.randint(0, self.n, ())
+            rp = self.render_paths[item][ind]
 
-        if self.crop_size is not None:
-            c, h, w = rim.shape
+            torch.set_rng_state(state)
+            rim = self.transform(Image.open(rp))
 
-            # Deal with images which are below the crop size by scaling them up
-            if h < self.crop_size[0] or w < self.crop_size[1]:
-                scale = max(self.crop_size[0] / h, self.crop_size[1] / w) + 0.1
-                new_h = int(scale * h)
-                new_w = int(scale * w)
-
-                rim = trf.resize(rim, size=[new_h, new_w])
-                gim = trf.resize(gim, size=[new_h, new_w])
-
-            # Perform the same random crop on both gt and rendered image
-            i, j, h, w = transforms.RandomCrop.get_params(rim, output_size=self.crop_size)
-            rim = trf.crop(rim, i, j, h, w)
-            gim = trf.crop(gim, i, j, h, w)
-
-        if self.flipx and torch.randint(0, 2, ()) == 1:
-            rim = trf.hflip(rim)
-            gim = trf.hflip(gim)
-
-        if self.flipy and torch.randint(0, 2, ()) == 1:
-            rim = trf.vflip(rim)
-            gim = trf.vflip(gim)
-
-        return rim, gim
+            return rim, gim
 
 
-def construct_subset_dataset(root_path: str, out_path: str, split_every_n: int, scale_to: Tuple[int, int], iters: List[int] = None, scenes=None):
+def construct_subset_dataset(root_path: str, out_path: str, split_every_n: int, scale_to: Tuple[int, int],
+                             iters: List[int] = None, scenes=None):
     """Create a 'subset' dataset containing only some scenes and iteration counts"""
+
     def path_list(scene, test_or_train, iters):
         x = "gt" if iters is None else f"render_{iters}"
         path = os.path.join(root_path, scene, x, test_or_train)
@@ -107,9 +111,6 @@ def construct_subset_dataset(root_path: str, out_path: str, split_every_n: int, 
 
     # e.g. gt_paths = ["a", "b", "c"]
     #   render_paths = [["a1", "a2", "a3"], ...]
-
-    # [a1, b1, c1]
-    # [a2, b2, c2]
 
     for scene in os.listdir(root_path):
         # If scenes is specified, skip scene if not in the list
@@ -175,6 +176,3 @@ if __name__ == "__main__":
                              scenes=args.scenes,
                              split_every_n=args.split_every_n,
                              scale_to=tuple(args.scale_to))
-
-
-
