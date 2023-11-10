@@ -1,0 +1,7 @@
+.idea
+gaussian_data
+splats
+noisy_dataset
+
+*.pyc
+.DS_store
