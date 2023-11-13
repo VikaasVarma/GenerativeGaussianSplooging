@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import diffusers
 import argparse
-from util import device, evaluate
+from util import device
+import util
 from noisy_dataset import NoisyDataset
 
 
@@ -42,15 +43,7 @@ class ImageToImageBaseline(nn.Module):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", type=str, help="Path to pre-trained Stable Diffusion checkpoint")
-    parser.add_argument("-s", "--strength", type=float,
-                        help="Denoising strength; 0 doesn't change the image, 1.0 gives a totally new image")
-    parser.add_argument("-d", "--directory", type=str, help="Dataset directory")
-    parser.add_argument("-g", "--cfg", type=float, help="Classifier-free guidance", default=0)
-    parser.add_argument("-p", "--prompt", type=str, nargs="+", help="Prompt", default=None)
-    parser.add_argument("-np", "--nprompt", type=str, nargs="+", help="Negative prompt", default=None)
-
+    parser = util.get_parser()
     args = parser.parse_args()
     prompt = " ".join(args.prompt) if args.prompt is not None else None
     nprompt = " ".join(args.nprompt) if args.nprompt is not None else None
@@ -67,14 +60,18 @@ if __name__ == "__main__":
     # sd.enable_freeu(s1=0.9, s2=0.2, b1=1.2, b2=1.4)
     sd.set_progress_bar_config(disable=True)
     assert sd.safety_checker is None
-    model = ImageToImageBaseline(sd, strength=args.strength, prompt=prompt, negative_prompt=nprompt,
-                                 cfg=args.cfg).to(device)
+    model = ImageToImageBaseline(sd,
+                                 strength=args.strength,
+                                 prompt=prompt,
+                                 negative_prompt=nprompt,
+                                 cfg=args.cfg,
+                                 nsteps=args.nsteps).to(device)
 
-    psnr, ssim = evaluate(model, test_ds, batch_size=1)
+    psnr, ssim = util.evaluate(model, test_ds, batch_size=1)
     print(f"Results with strength={args.strength}, cfg={args.cfg}, prompt={prompt}, nprompt={nprompt}")
     print(f"Im2im: PSNR={psnr.item():.3f}, SSIM={ssim.item():.4f}")
 
-    psnr, ssim = evaluate(lambda x: x, test_ds, batch_size=8)
+    psnr, ssim = util.evaluate(lambda x: x, test_ds, batch_size=8)
     print(f"Dataset: PSNR={psnr.item():.3f}, SSIM={ssim.item():.4f}")
 
 

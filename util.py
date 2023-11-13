@@ -4,6 +4,7 @@ import torch.utils.data as dutils
 from tqdm import tqdm
 from torchvision import transforms
 import matplotlib.pyplot as plt
+import argparse
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -44,3 +45,17 @@ def evaluate(model, dataset, batch_size):
             # plt.show()
 
     return psnr_total / len(dataset), ssim_total / len(dataset)
+
+
+def get_parser() -> argparse.ArgumentParser:
+    """Shared args"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--model", type=str, help="Path to pre-trained Stable Diffusion checkpoint")
+    parser.add_argument("-s", "--strength", type=float,
+                        help="Denoising strength; 0 doesn't change the image, 1.0 gives a totally new image")
+    parser.add_argument("-d", "--directory", type=str, help="Dataset directory")
+    parser.add_argument("-g", "--cfg", type=float, help="Classifier-free guidance", default=0)
+    parser.add_argument("-p", "--prompt", type=str, nargs="+", help="Prompt", default=None)
+    parser.add_argument("-np", "--nprompt", type=str, nargs="+", help="Negative prompt", default=None)
+    parser.add_argument("-n", "--nsteps", type=int, help="Total diffusion steps", default=50)
+    return parser

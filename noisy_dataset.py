@@ -43,7 +43,8 @@ class NoisyDataset(dutils.Dataset):
         assert os.path.isdir(self.root_path)
 
         gt_root = join(self.root_path, "gt")
-        self.gt_paths = [join(gt_root, i) for i in os.listdir(gt_root)]
+        items = os.listdir(gt_root)
+        self.gt_paths = [join(gt_root, i) for i in items]
 
         render_root = join(self.root_path, "render")
 
@@ -54,14 +55,12 @@ class NoisyDataset(dutils.Dataset):
             paths = []
             for d in os.listdir(render_root):
                 path = join(render_root, d)
-                paths.append([join(path, i) for i in os.listdir(path)])
-            lengths = [len(i) for i in paths]
-            assert len(set(lengths)) == 1, f"Directories in {render_root} have different file counts: {lengths}"
+                paths.append([join(path, i) for i in items])
             self.render_paths = list(zip(*paths))
             self.n = len(paths)
         # Single
         else:
-            self.render_paths = [[join(render_root, i)] for i in os.listdir(render_root)]
+            self.render_paths = [[join(render_root, i)] for i in items]
             self.n = 1
 
     def __len__(self):
