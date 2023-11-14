@@ -1,8 +1,7 @@
-"""Defines the baseline Stable Diffusion image-to-image model. If used as a command, applies"""
+"""Defines the baseline Stable Diffusion image-to-image model"""
 import torch
 import torch.nn as nn
 import diffusers
-import argparse
 from util import device
 import util
 from noisy_dataset import NoisyDataset
