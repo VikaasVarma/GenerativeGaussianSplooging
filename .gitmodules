@@ -1,4 +1,5 @@
 [submodule "UniControl"]
+    branch = main
 	path = UniControl
 	url = https://github.com/VikaasVarma/UniControl.git
 [submodule "ControlNet"]
