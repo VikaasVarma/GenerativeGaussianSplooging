@@ -14,7 +14,13 @@ from ControlNet.cldm.model import create_model, load_state_dict
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, required=True, help="Root path for noisy dataset")
+parser.add_argument("-d", "--dataset", type=str, required=True, help="Root path for noisy dataset")
+# '../models/control-sd-v1-5.ckpt'
+parser.add_argument("-m", "--model-path", type=str, required=True, help="ControlNet model path")
+parser.add_argument("-b", "--batch-size", type=int, default=4, help="Batch size")
+# './ControlNet/models/cldm_v15.yaml' or without ControlNet
+parser.add_argument("-c", "--config", type=str, default="models/cldm_v15.yaml", help="Path to ControlNet config")
+parser.add_argument("-g", "--accum-grad", type=int, default=1, help="Gradient accumulation in batches")
 args = parser.parse_args()
 
 
@@ -38,8 +44,8 @@ class ControlNetDataset(dutils.Dataset):
 
 
 # Configs
-resume_path = './models/control-sd-v1-5.ckpt' # Move one directory back
-batch_size = 1
+resume_path = args.model_path
+batch_size = args.batch_size
 logger_freq = 300
 learning_rate = 1e-5
 sd_locked = True
@@ -47,7 +53,7 @@ only_mid_control = False
 
 
 # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
-model = create_model('./ControlNet/models/cldm_v15.yaml').cpu() # Remove ControlNet
+model = create_model(args.config).cpu()
 model.load_state_dict(load_state_dict(resume_path, location='cpu'))
 model.learning_rate = learning_rate
 model.sd_locked = sd_locked
@@ -60,7 +66,7 @@ noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", tra
 dataset = ControlNetDataset(noisy_ds)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(gpus=1, precision=16, accumulate_grad_batches=4, callbacks=[logger])
+trainer = pl.Trainer(gpus=1, precision=16, accumulate_grad_batches=args.accum_grad, callbacks=[logger])
 
 
 # Train!
