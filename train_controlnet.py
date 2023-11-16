@@ -2,6 +2,8 @@
 Code for training ControlNet for the de-splatting task.
 Adapted from the official guide: https://github.com/lllyasviel/ControlNet/blob/main/docs/train.md
 """
+import sys
+sys.path.append("ControlNet")  # workaround...
 import torch.utils.data as dutils
 import noisy_dataset
 import pytorch_lightning as pl
@@ -13,6 +15,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset", type=str, required=True, help="Root path for noisy dataset")
 args = parser.parse_args()
+
 
 class ControlNetDataset(dutils.Dataset):
     """A wrapper for NoisyDataset which uses """
