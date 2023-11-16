@@ -39,7 +39,7 @@ class ControlNetDataset(dutils.Dataset):
 
 # Configs
 resume_path = './models/control-sd-v1-5.ckpt'
-batch_size = 4
+batch_size = 1
 logger_freq = 300
 learning_rate = 1e-5
 sd_locked = True
@@ -60,7 +60,7 @@ noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", tra
 dataset = ControlNetDataset(noisy_ds)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(gpus=1, precision=32, callbacks=[logger])
+trainer = pl.Trainer(gpus=1, precision=16, accumulate_grad_batches=4, callbacks=[logger])
 
 
 # Train!
