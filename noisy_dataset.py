@@ -9,6 +9,7 @@ from os.path import join
 import argparse
 import shutil
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 # Flips, crops and changes hue
@@ -88,6 +89,17 @@ class NoisyDataset(dutils.Dataset):
             rim = self.transform(Image.open(rp))
 
             return rim, gim
+
+    def visualise(self, item):
+        render, gt = self[item]
+        tp = transforms.ToPILImage()
+        fig, axes = plt.subplots(1, 2)
+        axes[0].axis('off'); axes[1].axis('off')
+        axes[0].imshow(tp(render))
+        axes[1].imshow(tp(gt))
+        axes[0].title.set_text("Render")
+        axes[1].title.set_text("Ground truth")
+        plt.show()
 
 
 def construct_subset_dataset(root_path: str, out_path: str, split_every_n: int, scale_to: Tuple[int, int],
