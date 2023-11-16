@@ -38,7 +38,7 @@ class ControlNetDataset(dutils.Dataset):
 
 
 # Configs
-resume_path = './models/control-sd-v1-5.ckpt'
+resume_path = './models/control-sd-v1-5.ckpt' # Move one directory back
 batch_size = 1
 logger_freq = 300
 learning_rate = 1e-5
@@ -47,7 +47,7 @@ only_mid_control = False
 
 
 # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
-model = create_model('./ControlNet/models/cldm_v15.yaml').cpu()
+model = create_model('./ControlNet/models/cldm_v15.yaml').cpu() # Remove ControlNet
 model.load_state_dict(load_state_dict(resume_path, location='cpu'))
 model.learning_rate = learning_rate
 model.sd_locked = sd_locked
