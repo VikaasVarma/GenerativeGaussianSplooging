@@ -6,3 +6,9 @@ models
 
 *.pyc
 .DS_store
+
+
+.vscode/
+
+inputs/
+outputs/
