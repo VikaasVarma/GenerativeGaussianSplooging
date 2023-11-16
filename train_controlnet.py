@@ -4,10 +4,11 @@ Adapted from the official guide: https://github.com/lllyasviel/ControlNet/blob/m
 """
 import sys
 sys.path.append("ControlNet")  # workaround...
-import torch.utils.data as dutils
 import noisy_dataset
 import pytorch_lightning as pl
+import torch.utils.data as dutils
 from torch.utils.data import DataLoader
+import torch
 from ControlNet.cldm.logger import ImageLogger
 from ControlNet.cldm.model import create_model, load_state_dict
 import argparse
@@ -29,6 +30,10 @@ class ControlNetDataset(dutils.Dataset):
         render_im, gt_im = self.ds[item]
         # Normalise target to [-1, 1] as expected by ControlNet codebase
         gt_im = 2 * gt_im - 1
+
+        gt_im = gt_im.permute(1, 2, 0)
+        render_im = render_im.permute(1, 2, 0)
+        
         return dict(jpg=gt_im, hint=render_im, txt="")  # provide in expected format
 
 
