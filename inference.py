@@ -32,7 +32,7 @@ args = parser.parse_args()
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if not os.path.exists(args.input_dir):
-    os.makedirs(args.input_dir)
+    raise Exception(f"No inputs found at {args.input_dir}")
 
 if not os.path.exists(args.output_dir):
     os.makedirs(args.output_dir)
