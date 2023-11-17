@@ -22,6 +22,7 @@ parser.add_argument("-b", "--batch-size", type=int, default=4, help="Batch size"
 parser.add_argument("-c", "--config", type=str, default="models/cldm_v15.yaml", help="Path to ControlNet config")
 parser.add_argument("-g", "--accum-grad", type=int, default=1, help="Gradient accumulation in batches")
 parser.add_argument("-a", "--accelerator", type=str, default="gpu", help="Pytorch Lightning accelerator")
+parser.add_argument("-p", "--prompt", type=str, default="best quality, extremely detailed", help="Text prompt")
 args = parser.parse_args()
 
 
@@ -41,7 +42,7 @@ class ControlNetDataset(dutils.Dataset):
         gt_im = gt_im.permute(1, 2, 0)
         render_im = render_im.permute(1, 2, 0)
         
-        return dict(jpg=gt_im, hint=render_im, txt="")  # provide in expected format
+        return dict(jpg=gt_im, hint=render_im, txt=args.prompt)  # provide in expected format
 
 
 # Configs
@@ -67,7 +68,7 @@ noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", tra
 dataset = ControlNetDataset(noisy_ds)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad, callbacks=[logger])
+trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad, callbacks=[logger], )
 
 
 # Train!
