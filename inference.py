@@ -44,7 +44,7 @@ model.load_state_dict(load_state_dict(args.ckpt, location=device), strict=False)
 model.eval()
 
 ddim_sampler = DDIMSampler(model)
-dataloader = DataLoader(NoisyDataset(args.input_dir, split="test"), batch_size=args.batch_size, shuffle=False)
+dataloader = DataLoader(NoisyDataset(args.input_dir, split="train"), batch_size=args.batch_size, shuffle=False)
 
 with torch.no_grad():
     for idx, batch in enumerate(dataloader):

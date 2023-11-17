@@ -2,6 +2,3 @@
     branch = main
 	path = UniControl
 	url = https://github.com/VikaasVarma/UniControl.git
-[submodule "ControlNet"]
-	path = ControlNet
-	url = https://github.com/lllyasviel/ControlNet

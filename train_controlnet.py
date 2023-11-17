@@ -67,7 +67,7 @@ noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", tra
 dataset = ControlNetDataset(noisy_ds)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision=16, accumulate_grad_batches=args.accum_grad, callbacks=[logger])
+trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad, callbacks=[logger])
 
 
 # Train!
