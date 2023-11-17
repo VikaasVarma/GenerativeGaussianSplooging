@@ -5,7 +5,7 @@ Adapted from the official guide: https://github.com/lllyasviel/ControlNet/blob/m
 import sys
 sys.path.append("ControlNet")  # workaround...
 import noisy_dataset
-import lightning as pl
+import pytorch_lightning as pl
 import torch.utils.data as dutils
 from torch.utils.data import DataLoader
 import torch
