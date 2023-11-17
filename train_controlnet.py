@@ -21,6 +21,7 @@ parser.add_argument("-b", "--batch-size", type=int, default=4, help="Batch size"
 # './ControlNet/models/cldm_v15.yaml' or without ControlNet
 parser.add_argument("-c", "--config", type=str, default="models/cldm_v15.yaml", help="Path to ControlNet config")
 parser.add_argument("-g", "--accum-grad", type=int, default=1, help="Gradient accumulation in batches")
+parser.add_argument("-a", "--accelerator", type=str, default="gpu", help="Pytorch Lightning accelerator")
 args = parser.parse_args()
 
 
@@ -66,7 +67,7 @@ noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", tra
 dataset = ControlNetDataset(noisy_ds)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(gpus=1, precision=16, accumulate_grad_batches=args.accum_grad, callbacks=[logger])
+trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision=16, accumulate_grad_batches=args.accum_grad, callbacks=[logger])
 
 
 # Train!
