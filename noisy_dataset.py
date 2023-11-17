@@ -13,20 +13,13 @@ import matplotlib.pyplot as plt
 
 
 # Flips, crops and changes hue
-def get_transform(size=512, crop_size=0.4):
+def get_transform(size=512, crop_size=0.3):
     t = transforms.Compose([
         transforms.ToTensor(),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomVerticalFlip(),
-        transforms.RandomResizedCrop(size=size, scale=(crop_size, 1.0))
+        transforms.RandomResizedCrop(size=size, scale=(crop_size, 1.0)),
     ])
-
-    def transform(xs):
-        xs = t(xs)
-        hf = torch.rand(size=()) - 0.5
-        return trf.adjust_hue(xs, hue_factor=hf)
-
-    return transform
+    return t
 
 
 class NoisyDataset(dutils.Dataset):
