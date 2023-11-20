@@ -11,6 +11,8 @@ import shutil
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+import util
+
 
 # Flips, crops and changes hue
 def get_transform(size=512, crop_size=0.3):
@@ -85,14 +87,7 @@ class NoisyDataset(dutils.Dataset):
 
     def visualise(self, item):
         render, gt = self[item]
-        tp = transforms.ToPILImage()
-        fig, axes = plt.subplots(1, 2)
-        axes[0].axis('off'); axes[1].axis('off')
-        axes[0].imshow(tp(render))
-        axes[1].imshow(tp(gt))
-        axes[0].title.set_text("Render")
-        axes[1].title.set_text("Ground truth")
-        plt.show()
+        util.visualise_ims([render, gt], captions=["Render", "Ground Truth"])
 
 
 def construct_subset_dataset(root_path: str, out_path: str, split_every_n: int, scale_to: Tuple[int, int],

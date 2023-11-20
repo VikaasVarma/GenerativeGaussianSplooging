@@ -1,4 +1,6 @@
 import torch
+import numpy as np
+from PIL import Image
 from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure
 import torch.utils.data as dutils
 from tqdm import tqdm
@@ -59,3 +61,35 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("-np", "--nprompt", type=str, nargs="+", help="Negative prompt", default=None)
     parser.add_argument("-n", "--nsteps", type=int, help="Total diffusion steps", default=50)
     return parser
+
+
+def visualise_ims(images, captions=None):
+    def to_pil(im):
+        if isinstance(im, np.ndarray):
+            if im.dtype != np.uint8:
+                # Assume floating point type
+                im = np.max(np.min(im, 1), 0)
+                im = (im * 255).astype(np.uint8)
+            return Image.fromarray(im)
+        if isinstance(im, torch.Tensor):
+            if len(im.shape) == 4:
+                assert im.shape[0] == 1
+                im = im[0]
+            if im.shape[-1] == 3:
+                # Assumes (x, x, 3) means (H, W, C)
+                im = im.permute((2, 0, 1))
+            return transforms.ToPILImage()(im)
+        if isinstance(im, Image.Image):
+            return im
+        raise NotImplementedError(f"Unknown image type: {type(im)}")
+
+    images = [to_pil(i) for i in images]
+    n = len(images)
+
+    fig, axes = plt.subplots(1, n)
+    for i in range(n):
+        axes[i].axis('off')
+        axes[i].imshow(images[i])
+        if captions is not None:
+            axes[i].title.set_text(captions[i])
+    plt.show()
