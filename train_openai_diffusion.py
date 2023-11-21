@@ -46,11 +46,12 @@ class OpenAIDataset(dutils.Dataset):
 
 
 def get_dataloader(args):
-    return OpenAIDataset(
+    ds = OpenAIDataset(
         path=args.data_dir,
         split="train",
         size=args.image_size
     )
+    return dutils.DataLoader(ds, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
 
 def main():
