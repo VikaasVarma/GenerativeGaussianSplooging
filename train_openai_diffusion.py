@@ -55,7 +55,7 @@ def get_dataloader(args):
     def iterator():
         while True:
             yield from dl
-    return iterator
+    return iterator()
 
 
 def main():
