@@ -51,7 +51,11 @@ def get_dataloader(args):
         split="train",
         size=args.image_size
     )
-    return dutils.DataLoader(ds, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    dl = dutils.DataLoader(ds, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    def iterator():
+        while True:
+            yield from dl
+    return iterator
 
 
 def main():
