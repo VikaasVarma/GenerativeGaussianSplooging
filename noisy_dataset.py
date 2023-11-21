@@ -100,7 +100,9 @@ def construct_subset_dataset(root_path: str, out_path: str, split_every_n: int, 
         return [os.path.join(path, i) for i in os.listdir(path)]
 
     def cpy(src, dst):
-        im = Image.open(src).convert("RGB").resize(scale_to)
+        im = Image.open(src).convert("RGB")
+        if scale_to is not None:
+            im = im.resize(scale_to)
         im.save(dst)
 
     assert os.path.isdir(root_path)
@@ -163,15 +165,15 @@ if __name__ == "__main__":
     parser.add_argument("-is", "--iters", type=int, nargs="+", help="List of iters to include", default=None)
     parser.add_argument("-s", "--scenes", type=str, nargs="+", help="List of scenes to include", default=None)
     parser.add_argument("-n", "--split_every_n", type=int, help="Every nth image is added to test", default=10)
-    parser.add_argument("-st", "--scale_to", type=int, nargs="+", help="Scale all images to this size", required=True)
+    parser.add_argument("-st", "--scale_to", type=int, nargs="+", help="Scale all images to this size", default=None)
 
     args = parser.parse_args()
 
-    assert len(args.scale_to) == 2, "--scale_to argmuent must be given two integers '[width] [height]'."
+    assert args.scale_to is None or len(args.scale_to) == 2, "--scale_to argmuent must be given two integers '[width] [height]'."
 
     construct_subset_dataset(root_path=args.input,
                              out_path=args.output,
                              iters=args.iters,
                              scenes=args.scenes,
                              split_every_n=args.split_every_n,
-                             scale_to=tuple(args.scale_to))
+                             scale_to=tuple(args.scale_to) if args.scale_to is not None else None)

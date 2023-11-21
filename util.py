@@ -13,7 +13,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 
 def evaluate(model, dataset, batch_size):
     """Returns (mean PSNR, mean SSIM) on the given dataset."""
-    dl = dutils.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dl = dutils.DataLoader(dataset, batch_size=batch_size, shuffle=False)
     data_range = 1
     psnr = PeakSignalNoiseRatio(data_range=data_range, dim=(1, 2, 3), reduction="sum").to(device)
     ssim = StructuralSimilarityIndexMeasure(data_range=data_range, reduction="sum").to(device)
@@ -38,13 +38,16 @@ def evaluate(model, dataset, batch_size):
 
             it.set_description(f"PSNR = {psnr_total / count}, SSIM = {ssim_total / count}")
 
-            # ims = [xs[0], ys[0], ys_pred[0]]
-            # fig, axs = plt.subplots(3,1, figsize=(15, 30))
-            # for i in range(3):
-            #     axs[i].axis('off')
-            #     im = transforms.ToPILImage()(ims[i])
-            #     axs[i].imshow(im)
-            # plt.show()
+            if count == xs.shape[0]:
+                ims = [xs[0], ys_pred[0], ys[0]]
+                fig, axs = plt.subplots(3,1, figsize=(30, 60))
+                for i in range(3):
+                    axs[i].axis('off')
+                    im = transforms.ToPILImage()(ims[i])
+                    axs[i].imshow(im)
+                plt.show()
+                tqdm.write(f"SD psnr: {psnr(ys_pred[:1], ys[:1]).item(), ssim(ys_pred[:1], ys[:1]).item()}")
+                tqdm.write(f"original psnr: {psnr(xs[:1], ys[:1]).item(), ssim(xs[:1], ys[:1]).item()}")
 
     return psnr_total / len(dataset), ssim_total / len(dataset)
 
@@ -63,7 +66,7 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def visualise_ims(images, captions=None):
+def visualise_ims(images, captions=None, size_mul=2):
     def to_pil(im):
         if isinstance(im, np.ndarray):
             if im.dtype != np.uint8:
@@ -86,7 +89,7 @@ def visualise_ims(images, captions=None):
     images = [to_pil(i) for i in images]
     n = len(images)
 
-    fig, axes = plt.subplots(1, n)
+    fig, axes = plt.subplots(1, n, figsize=(n*size_mul, 1*size_mul))
     for i in range(n):
         axes[i].axis('off')
         axes[i].imshow(images[i])
