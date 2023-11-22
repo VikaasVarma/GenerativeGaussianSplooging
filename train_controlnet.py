@@ -12,6 +12,7 @@ import torch
 from ControlNet.cldm.logger import ImageLogger
 from ControlNet.cldm.model import create_model, load_state_dict
 import argparse
+import util
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", type=str, required=True, help="Root path for noisy dataset")
@@ -23,6 +24,8 @@ parser.add_argument("-c", "--config", type=str, default="models/cldm_v15.yaml", 
 parser.add_argument("-g", "--accum-grad", type=int, default=1, help="Gradient accumulation in batches")
 parser.add_argument("-a", "--accelerator", type=str, default="gpu", help="Pytorch Lightning accelerator")
 parser.add_argument("-p", "--prompt", type=str, default="best quality, extremely detailed", help="Text prompt")
+parser.add_argument("-ck", "--ckpt_path", type=str, default=None, help="Checkpoint path to resume training")
+parser.add_argument("--dataset-in-memory", action="store_true")
 args = parser.parse_args()
 
 
@@ -54,6 +57,19 @@ learning_rate = 1e-5
 sd_locked = True
 only_mid_control = False
 
+# Construct dataset
+transform = noisy_dataset.get_transform(size=512)
+noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", transform=transform, load_into_memory=args.dataset_in_memory)
+dataset = ControlNetDataset(noisy_ds)
+dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
+
+# Visualise dataset
+# for d in dataloader:
+#     break
+# gt = d["jpg"] * .5 + .5
+# rend = d["hint"] * .5 + .5
+# for i in range(4):
+#     util.visualise_ims([rend[i], gt[i]], captions=["Render", "Ground Truth"])
 
 # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
 model = create_model(args.config).cpu()
@@ -62,14 +78,9 @@ model.learning_rate = learning_rate
 model.sd_locked = sd_locked
 model.only_mid_control = only_mid_control
 
-
-# Misc
-transform = noisy_dataset.get_transform(size=512)
-noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", transform=transform)
-dataset = ControlNetDataset(noisy_ds)
-dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad, callbacks=[logger], )
+trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad,
+                     callbacks=[logger], ckpt_path=args.ckpt_path)
 
 
 # Train!
