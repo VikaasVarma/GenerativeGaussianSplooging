@@ -36,8 +36,9 @@ class ControlNetDataset(dutils.Dataset):
 
     def __getitem__(self, item):
         render_im, gt_im = self.ds[item]
-        # Normalise target to [-1, 1] as expected by ControlNet codebase
+
         gt_im = 2 * gt_im - 1
+        render_im = 2 * render_im - 1
 
         gt_im = gt_im.permute(1, 2, 0)
         render_im = render_im.permute(1, 2, 0)
