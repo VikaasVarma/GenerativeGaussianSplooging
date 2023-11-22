@@ -26,6 +26,7 @@ parser.add_argument("-a", "--accelerator", type=str, default="gpu", help="Pytorc
 parser.add_argument("-p", "--prompt", type=str, default="best quality, extremely detailed", help="Text prompt")
 parser.add_argument("-ck", "--ckpt_path", type=str, default=None, help="Checkpoint path to resume training")
 parser.add_argument("--dataset-in-memory", action="store_true")
+parser.add_argument("--image_log_freq", type=int, default=300, help="How often to sample images")
 args = parser.parse_args()
 
 
@@ -50,9 +51,6 @@ class ControlNetDataset(dutils.Dataset):
 
 
 # Configs
-resume_path = args.model_path
-batch_size = args.batch_size
-logger_freq = 300
 learning_rate = 1e-5
 sd_locked = True
 only_mid_control = False
@@ -61,7 +59,7 @@ only_mid_control = False
 transform = noisy_dataset.get_transform(size=512)
 noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", transform=transform, load_into_memory=args.dataset_in_memory)
 dataset = ControlNetDataset(noisy_ds)
-dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=True)
+dataloader = DataLoader(dataset, num_workers=0, batch_size=args.batch_size, shuffle=True)
 
 # Visualise dataset
 # for d in dataloader:
@@ -73,15 +71,15 @@ dataloader = DataLoader(dataset, num_workers=0, batch_size=batch_size, shuffle=T
 
 # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
 model = create_model(args.config).cpu()
-model.load_state_dict(load_state_dict(resume_path, location='cpu'))
+# Note: model_path is not currently used, only ckpt_path
+# model.load_state_dict(load_state_dict(args.model_path, location='cpu'))
 model.learning_rate = learning_rate
 model.sd_locked = sd_locked
 model.only_mid_control = only_mid_control
 
-logger = ImageLogger(batch_frequency=logger_freq)
+logger = ImageLogger(batch_frequency=args.image_log_freq)
 trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad,
                      callbacks=[logger], resume_from_checkpoint=args.ckpt_path)
-
 
 # Train!
 trainer.fit(model, dataloader)
