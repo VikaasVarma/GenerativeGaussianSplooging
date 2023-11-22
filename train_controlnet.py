@@ -80,7 +80,7 @@ model.only_mid_control = only_mid_control
 
 logger = ImageLogger(batch_frequency=logger_freq)
 trainer = pl.Trainer(accelerator=args.accelerator, devices=1, precision='bf16', accumulate_grad_batches=args.accum_grad,
-                     callbacks=[logger], ckpt_path=args.ckpt_path)
+                     callbacks=[logger], resume_from_checkpoint=args.ckpt_path)
 
 
 # Train!
