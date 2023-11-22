@@ -1,6 +1,7 @@
 import torch
 from torchvision import transforms
 import torchvision.transforms.functional as trf
+import numpy as np
 import torch.utils.data as dutils
 from typing import List, Tuple
 from PIL import Image
@@ -30,7 +31,7 @@ class NoisyDataset(dutils.Dataset):
     Data augmentation: gives option to crop, flip.
     """
 
-    def __init__(self, root_path: str, split: str, return_all=False, transform=None):
+    def __init__(self, root_path: str, split: str, return_all=False, transform=None, load_into_memory=False):
         self.root_path = join(root_path, split)
         self.return_all = return_all
         self.transform = transform if transform is not None else transforms.ToTensor()
@@ -59,29 +60,52 @@ class NoisyDataset(dutils.Dataset):
             self.render_paths = [[join(render_root, i)] for i in items]
             self.n = 1
 
+        self.load_into_memory = load_into_memory
+
+        def save_im(path):
+            with Image.open(path) as im:
+                return np.array(im)
+
+        if load_into_memory:
+            print("Loading entire dataset into RAM...")
+            self.gt_ims = [save_im(p) for p in self.gt_paths]
+            self.render_ims = []
+            for x in self.render_paths:
+                if isinstance(x, list):
+                    self.render_ims.append([save_im(p) for p in x])
+                else:
+                    self.render_ims.append([save_im(x)])
+
     def __len__(self):
         return len(self.gt_paths)
 
+    def _load_gt(self, index):
+        if self.load_into_memory:
+            return Image.fromarray(self.gt_ims[index])
+        return Image.open(self.gt_paths[index])
+
+    def _load_render(self, index, index2):
+        if self.load_into_memory:
+            return Image.fromarray(self.render_ims[index][index2])
+        return Image.open(self.render_paths[index][index2])
+
     def __getitem__(self, item):
         """Returns (gt, rendered_im) both of shape 3 x H x W where (H, W) = self.crop_size."""
-        gp = self.gt_paths[item]
-
         state = torch.get_rng_state()
-        gim = self.transform(Image.open(gp))
+        gim = self.transform(self._load_gt(item))
 
         if self.return_all:
             rims = []
-            for rp in self.render_paths[item]:
+            for i in range(len(self.render_paths)):
                 torch.set_rng_state(state)
-                rim = self.transform(Image.open(rp))
+                rim = self.transform(self._load_render(item, i))
                 rims.append(rim)
             return tuple(rims), gim
         else:
             ind = item % self.n if self.split == "test" else torch.randint(0, self.n, ())
-            rp = self.render_paths[item][ind]
 
             torch.set_rng_state(state)
-            rim = self.transform(Image.open(rp))
+            rim = self.transform(self._load_render(item, ind))
 
             return rim, gim
 
