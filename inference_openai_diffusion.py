@@ -15,6 +15,7 @@ import torch.distributed as dist
 from torchvision import transforms
 from tqdm import trange
 import gc
+import util
 
 from guided_diffusion import dist_util, logger
 from guided_diffusion.script_util import (
@@ -34,12 +35,12 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys()),
         in_channels=6
     )
-    print("Loading params...")
-    model.load_state_dict(
-        dist_util.load_state_dict(args.model_path, map_location="cpu")
-    )
     print("Moving to cuda...")
     model.to(device)
+    print("Loading params...")
+    model.load_state_dict(
+        th.load(args.model_path, map_location=lambda storage, loc: storage)
+    )
     if args.use_fp16:
         model.convert_to_fp16()
     model.eval()
@@ -49,11 +50,7 @@ def main():
     print("Writing to", args.out_dir)
     os.makedirs(args.out_dir, exist_ok=True)
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Resize(size=args.image_size),  # preserves aspect
-        transforms.CenterCrop(size=args.image_size),
-    ])
+    transform = util.eval_transform(size=args.image_size)
 
     for start in range(0, len(files), args.batch_size):
         print(start,"/",len(files))

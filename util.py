@@ -11,7 +11,7 @@ import argparse
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
-def evaluate(model, dataset, batch_size):
+def evaluate(model, dataset, batch_size, once=False):
     """Returns (mean PSNR, mean SSIM) on the given dataset."""
     dl = dutils.DataLoader(dataset, batch_size=batch_size, shuffle=False)
     data_range = 1
@@ -48,6 +48,8 @@ def evaluate(model, dataset, batch_size):
                 plt.show()
                 tqdm.write(f"SD psnr: {psnr(ys_pred[:1], ys[:1]).item(), ssim(ys_pred[:1], ys[:1]).item()}")
                 tqdm.write(f"original psnr: {psnr(xs[:1], ys[:1]).item(), ssim(xs[:1], ys[:1]).item()}")
+
+                if once: return
 
     return psnr_total / len(dataset), ssim_total / len(dataset)
 
@@ -96,3 +98,11 @@ def visualise_ims(images, captions=None, size_mul=2):
         if captions is not None:
             axes[i].title.set_text(captions[i])
     plt.show()
+
+
+def eval_transform(size: int):
+    return transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Resize(size),  # preserves aspect
+        transforms.CenterCrop(size)
+    ])
