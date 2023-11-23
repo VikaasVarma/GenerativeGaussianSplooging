@@ -6,16 +6,14 @@ import sys
 
 sys.path.append("ControlNet")  # workaround...
 import noisy_dataset
-import pytorch_lightning as pl
-import torch.utils.data as dutils
 from torch.utils.data import DataLoader
 import torch
 from torchvision import transforms
-from ControlNet.cldm.logger import ImageLogger
 from ControlNet.cldm.model import create_model, load_state_dict
 from ControlNet.cldm.ddim_hacked import DDIMSampler
 import argparse
 import util
+from cnet.dataset import ControlNetDataset
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", type=str, required=True, help="Root path for noisy dataset")
@@ -60,34 +58,10 @@ def sample(xs):
         return x_samples  # B x C x H x W
 
 
-# TODO: Move to own file
-class ControlNetDataset(dutils.Dataset):
-    """A wrapper for NoisyDataset which uses """
-
-    def __init__(self, ds: noisy_dataset.NoisyDataset, permute=True):
-        self.ds = ds
-        self.permute = permute
-
-    def __len__(self):
-        return len(self.ds)
-
-    def __getitem__(self, item):
-        render_im, gt_im = self.ds[item]
-
-        gt_im = 2 * gt_im - 1
-        render_im = 2 * render_im - 1
-
-        if self.permute:
-            gt_im = gt_im.permute(1, 2, 0)
-            render_im = render_im.permute(1, 2, 0)
-
-        return dict(jpg=gt_im, hint=render_im, txt=args.prompt)  # provide in expected format
-
-
 # Construct dataset
 transform = util.eval_transform(size=512)
 noisy_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="test", transform=transform)
-dataset = ControlNetDataset(noisy_ds, permute=False)
+dataset = ControlNetDataset(noisy_ds, prompt=args.prompt, permute=False)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=args.batch_size, shuffle=False)
 
 model = create_model(args.config).cpu()
