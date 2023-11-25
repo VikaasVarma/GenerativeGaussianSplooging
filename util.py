@@ -7,11 +7,64 @@ from tqdm import tqdm
 from torchvision import transforms
 import matplotlib.pyplot as plt
 import argparse
+import os
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
-def evaluate(model, dataset, batch_size, once=False):
+def calculate_psnr_ssim(output_dir, gt_dir, quiet=False):
+    """Computes PSNR and SSIM given images saved in two directories."""
+    transform = transforms.ToTensor()
+    # psnr = PeakSignalNoiseRatio(data_range=1, dim=(0, 1, 2), reduction="sum")
+    # ssim = StructuralSimilarityIndexMeasure(data_range=data_range, reduction="sum")
+    psnr = PeakSignalNoiseRatio(data_range=1)
+    ssim = StructuralSimilarityIndexMeasure(data_range=1)
+
+    psnr_total = 0
+    ssim_total = 0
+    count = 0
+
+    it = sorted(os.listdir(output_dir))
+    if not quiet:
+        it = tqdm(it, desc="Computing PSNR and SSIM")
+
+    for f in it:
+        out_im = Image.open(os.path.join(output_dir, f))
+        gt_im = Image.open(os.path.join(gt_dir, f))
+
+        out_im = transform(out_im)[None]
+        gt_im = transform(gt_im)[None]
+
+        psnr_total += psnr(out_im, gt_im)
+        ssim_total += ssim(out_im, gt_im)
+        count += 1
+
+    return (psnr_total / count, ssim_total / count)
+
+
+def inference_on_dataset(model, dataset, out_dir, batch_size):
+    """Apply a model to every file in a dataset, saving the results to disk"""
+    dl = dutils.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+    transform = transforms.ToPILImage()
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    index = 0
+
+    with torch.no_grad():
+        it = tqdm(dl, desc="Applying model to dataset...")
+        print(f"Writing results to {out_dir}...")
+        for xs, _ in it:
+            xs = xs.to(device)
+            ys_pred = model(xs)
+            n = xs.shape[0]
+            for i in range(n):
+                transform(ys_pred[i]).save(os.path.join(out_dir, f"{index}.png"))
+                index += 1
+
+
+def evaluate_and_calculate_psnr_ssim(model, dataset, batch_size):
     """Returns (mean PSNR, mean SSIM) on the given dataset."""
     dl = dutils.DataLoader(dataset, batch_size=batch_size, shuffle=False)
     data_range = 1
@@ -48,8 +101,6 @@ def evaluate(model, dataset, batch_size, once=False):
                 plt.show()
                 tqdm.write(f"SD psnr: {psnr(ys_pred[:1], ys[:1]).item(), ssim(ys_pred[:1], ys[:1]).item()}")
                 tqdm.write(f"original psnr: {psnr(xs[:1], ys[:1]).item(), ssim(xs[:1], ys[:1]).item()}")
-
-                if once: return
 
     return psnr_total / len(dataset), ssim_total / len(dataset)
 

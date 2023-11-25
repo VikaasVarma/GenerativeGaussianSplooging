@@ -49,7 +49,8 @@ if __name__ == "__main__":
 
     print(f"Running with strength={args.strength}, cfg={args.cfg}, prompt={prompt}, nprompt={nprompt}")
 
-    test_ds = NoisyDataset(root_path=args.directory, split="test", transform=None)
+    transform = util.eval_transform(size=512)
+    test_ds = NoisyDataset(root_path=args.directory, split="test", transform=transform)
 
     sd = diffusers.StableDiffusionImg2ImgPipeline.from_pretrained(
         args.model,
@@ -66,11 +67,7 @@ if __name__ == "__main__":
                                  cfg=args.cfg,
                                  nsteps=args.nsteps).to(device)
 
-    psnr, ssim = util.evaluate(model, test_ds, batch_size=1)
-    print(f"Results with strength={args.strength}, cfg={args.cfg}, prompt={prompt}, nprompt={nprompt}")
-    print(f"Im2im: PSNR={psnr.item():.3f}, SSIM={ssim.item():.4f}")
-
-    psnr, ssim = util.evaluate(lambda x: x, test_ds, batch_size=8)
-    print(f"Dataset: PSNR={psnr.item():.3f}, SSIM={ssim.item():.4f}")
+    out_dir = f"out/baseline_s={args.strength}_cfg={args.cfg}"
+    util.inference_on_dataset(model, test_ds, out_dir, batch_size=1)
 
 

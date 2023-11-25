@@ -3,6 +3,7 @@ gaussian_data
 splats
 noisy_dataset
 models
+out
 
 *.pyc
 .DS_store
