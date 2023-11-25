@@ -65,7 +65,7 @@ dataset = ControlNetDataset(noisy_ds, prompt=args.prompt, permute=False)
 dataloader = DataLoader(dataset, num_workers=0, batch_size=args.batch_size, shuffle=False)
 
 model = create_model(args.config).cpu()
-# model.load_state_dict(load_state_dict(args.ckpt_path, location='cuda'))
+model.load_state_dict(load_state_dict(args.ckpt_path, location='cuda'))
 # model.load_from_checkpoint(args.ckpt_path)
 model = model.cuda()
 model.eval()
@@ -73,20 +73,27 @@ ddim_sampler = DDIMSampler(model)
 
 out1 = os.path.join(args.out_dir, "input")
 out2 = os.path.join(args.out_dir, "output")
+out3 = os.path.join(args.out_dir, "gt")
 os.makedirs(out1, exist_ok=True)
 os.makedirs(out2, exist_ok=True)
+os.makedirs(out3, exist_ok=True)
 
 to_pil = transforms.ToPILImage()
 
 index = 0
-for xs, ys in dataloader:
-    xs = xs.to(util.device)
+for d in dataloader:
+    xs = d["hint"].to(util.device)
     pred = sample(xs)
+    ys = d["jpg"]
 
     xs = ((xs + 1) / 2).clamp(0, 1)
     pred = ((pred + 1) / 2).clamp(0, 1)
+    ys = ((ys + 1) / 2).clamp(0, 1)
 
     n = pred.shape[0]
     for i in range(n):
         to_pil(xs[i]).save(os.path.join(out1, f"{index}.png"))
         to_pil(pred[i]).save(os.path.join(out2, f"{index}.png"))
+        to_pil(ys[i]).save(os.path.join(out3, f"{index}.png"))
+        index += 1
+    
