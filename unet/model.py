@@ -1,16 +1,8 @@
 """Defines the baseline Stable Diffusion image-to-image model"""
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 from typing import List
-import argparse
-from tqdm import tqdm
 import os
-import pytorch_lightning as pl
-
-from util import device
-import util
-import noisy_dataset
 
 
 class ResBlock(nn.Module):
@@ -79,6 +71,8 @@ class UNet(nn.Module):
         self.final_conv = nn.Conv2d(in_channels=prev_channels, out_channels=3, kernel_size=1)
         self.downsample = nn.MaxPool2d(kernel_size=2, stride=2)
 
+        self.losses = []
+
     def forward(self, xs):
         res = []
         for ind, group in enumerate(self.down_groups):
@@ -104,7 +98,8 @@ class UNet(nn.Module):
     def save(self, optim, path):
         d = {
             "params": self.state_dict(),
-            "opt": optim.state_dict()
+            "opt": optim.state_dict(),
+            "losses": self.losses
         }
         torch.save(d, path)
         print("Saved to", path)
@@ -113,56 +108,7 @@ class UNet(nn.Module):
         if os.path.isfile(path):
             d = torch.load(path)
             self.load_state_dict(d["params"])
-            optim.load_state_dict(d["optim"])
+            optim.load_state_dict(d["opt"])
+            self.losses = d["losses"]
         else:
             print("No checkpoint found at", path)
-
-
-# TODO: Move to submodule, separate unet/train_unet/eval_unet files
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--dataset", type=str, required=True, help="Root path for noisy dataset")
-    parser.add_argument("-m", "--model-path", type=str, required=True, help="ControlNet model path")
-    parser.add_argument("-b", "--batch-size", type=int, default=4, help="Batch size")
-    args = parser.parse_args()
-
-    transform = noisy_dataset.get_transform(size=512)
-    train_ds = noisy_dataset.NoisyDataset(root_path=args.dataset, split="train", transform=transform)
-    train_dl = DataLoader(train_ds, num_workers=0, batch_size=args.batch_size, shuffle=True)
-
-    # 1) make model
-    unet = UNet(channels=[16, 32, 64]).to(device)
-    optim = torch.optim.AdamW(unet.parameters(), lr=1e-4)
-    loss_fn = nn.MSELoss()
-    unet.load(optim, args.model_path)
-
-    # 2) train
-    for i in range(10):
-        tloss = 0
-        c = 0
-        it = tqdm(train_dl)
-        for xs, ys in it:
-            xs = xs.to(device)
-            ys = ys.to(device)
-            optim.zero_grad()
-            ys_pred = unet(xs)
-            loss = loss_fn(ys_pred, ys)
-            loss.backward()
-            optim.step()
-            tloss += loss.item()
-            c += 1
-            it.set_description(f"Loss = {tloss / c:.4f}")
-        print(f"AVERAGE LOSS FOR ROUND {i+1}:", tloss / c)
-
-        unet.save(optim, args.model_path)
-
-        with torch.no_grad():
-            for j in range(xs.shape[0]):
-                util.visualise_ims([xs[j], ys_pred[j], ys[j]],
-                                   ["Render", "Pred", "GT"],
-                                   size_mul=4)
-
-    # 3) eval
-    # psnr, ssim = util.evaluate(model, test_ds, batch_size=1)
-
-

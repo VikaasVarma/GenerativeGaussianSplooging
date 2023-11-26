@@ -25,7 +25,6 @@ class GuidedImageToImage(nn.Module):
         self.prompt = prompt if prompt is not None else ""
         self.negative_prompt = negative_prompt
 
-        steps = 1000
         self.guidance_strength = guidance_strength
 
     def forward(self, xs):
