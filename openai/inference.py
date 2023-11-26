@@ -9,12 +9,7 @@ import os
 
 from torchvision.transforms.v2.functional import to_pil_image, to_tensor
 from PIL import Image
-import numpy as np
 import torch as th
-import torch.distributed as dist
-from torchvision import transforms
-from tqdm import trange
-import gc
 import util
 
 from guided_diffusion import dist_util, logger
@@ -47,8 +42,9 @@ def main():
 
     files = os.listdir(args.data_dir)
     print("Reading from", args.data_dir)
-    print("Writing to", args.out_dir)
-    os.makedirs(args.out_dir, exist_ok=True)
+    out_dir = os.path.join(args.out_dir, f"openai_gs={args.gs}")
+    print("Writing to", out_dir)
+    os.makedirs(out_dir, exist_ok=True)
 
     transform = util.eval_transform(size=args.image_size)
 
@@ -63,7 +59,7 @@ def main():
                 tensor = tensor.to(device) * 2 - 1
                 tensors.append(tensor.unsqueeze(0))
 
-            output_paths.append(os.path.join(args.out_dir, files[i]))
+            output_paths.append(os.path.join(out_dir, files[i]))
 
         cond = th.cat(tensors, dim=0)
         model_kwargs = {"concat_cond": cond}
@@ -75,6 +71,8 @@ def main():
             (args.batch_size, 3, args.image_size, args.image_size),
             clip_denoised=args.clip_denoised,
             model_kwargs=model_kwargs,
+            progress=True,
+            gs=args.gs
         )
         sample = ((sample + 1) / 2).clamp(0, 1)
         # sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
@@ -99,6 +97,7 @@ def create_argparser():
     add_dict_to_argparser(parser, defaults)
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--out_dir", type=str, required=True)
+    parser.add_argument("--gs", type=float, default=2)
     return parser
 
 
