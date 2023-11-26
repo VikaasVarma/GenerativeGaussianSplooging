@@ -108,7 +108,8 @@ class UNet(nn.Module):
         if os.path.isfile(path):
             d = torch.load(path)
             self.load_state_dict(d["params"])
-            optim.load_state_dict(d["opt"])
             self.losses = d["losses"]
+            if optim is not None:
+                optim.load_state_dict(d["opt"])
         else:
             print("No checkpoint found at", path)
