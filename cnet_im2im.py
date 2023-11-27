@@ -25,7 +25,7 @@ if __name__ == "__main__":
     scheduler = diffusers.DDIMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear",
                                         clip_sample=False, set_alpha_to_one=False)
 
-    controlnet = diffusers.ControlNetModel.from_pretrained(args.controlnet, torch_dtype=torch.float16)
+    controlnet = diffusers.ControlNetModel.from_single_file(args.controlnet, torch_dtype=torch.float16)
     sd = diffusers.StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
         args.model,
         controlnet=controlnet,

@@ -23,7 +23,7 @@ class ImageToImageBaseline(nn.Module):
         self.prompt = prompt if prompt is not None else ""
         self.negative_prompt = negative_prompt
 
-    def forward(self, xs):
+    def forward(self, xs, **kwargs):
         # xs : B x C x H x W
         (out, ), _ = self.sd(
             prompt=self.prompt,
@@ -33,7 +33,8 @@ class ImageToImageBaseline(nn.Module):
             guidance_scale=self.cfg,
             negative_prompt=self.negative_prompt,
             return_dict=False,
-            output_type="pt"  # return a Tensor
+            output_type="pt",  # return a Tensor
+            **kwargs
         )
         # Given batch size 1, the pipeline automatically removes this dimension
         if len(out.shape) == 3:
