@@ -40,7 +40,7 @@ class NoisyDataset(dutils.Dataset):
         assert os.path.isdir(self.root_path)
 
         gt_root = join(self.root_path, "gt")
-        items = os.listdir(gt_root)
+        items = sorted(os.listdir(gt_root))
         self.gt_paths = [join(gt_root, i) for i in items]
 
         render_root = join(self.root_path, "render")
