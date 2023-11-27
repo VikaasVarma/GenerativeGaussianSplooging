@@ -3,7 +3,7 @@ import torch.utils.data as dutils
 
 
 class ControlNetDataset(dutils.Dataset):
-    """A wrapper for NoisyDataset which uses """
+    """A wrapper for NoisyDataset, providing data in the format expected by ControlNet"""
 
     def __init__(self, ds: noisy_dataset.NoisyDataset, prompt: str, permute: bool = True):
         self.ds = ds

@@ -32,6 +32,10 @@ def calculate_psnr_ssim(output_dir, gt_dir, quiet=False):
         out_im = Image.open(os.path.join(output_dir, f))
         gt_im = Image.open(os.path.join(gt_dir, f))
 
+        if out_im.size != (512, 512):
+            print("Rescaling in", output_dir)
+            out_im = out_im.resize((512, 512))
+
         out_im = transform(out_im)[None]
         gt_im = transform(gt_im)[None]
 
@@ -39,7 +43,7 @@ def calculate_psnr_ssim(output_dir, gt_dir, quiet=False):
         ssim_total += ssim(out_im, gt_im)
         count += 1
 
-    return (psnr_total / count, ssim_total / count)
+    return (psnr_total.item() / count, ssim_total.item() / count)
 
 
 def inference_on_dataset(model, dataset, out_dir, batch_size):
