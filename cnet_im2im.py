@@ -2,7 +2,7 @@ import diffusers
 import torch
 
 from sd_l2_guidance import GuidedImageToImage
-from baseline import ImageToImageBaseline
+# from baseline import ImageToImageBaseline
 from noisy_dataset import NoisyDataset
 import util
 from util import device
@@ -34,22 +34,20 @@ if __name__ == "__main__":
     )
     sd.scheduler = scheduler
     sd.set_progress_bar_config(disable=True)
-
-    # Optimisations required due to high VRAM requirement
-    sd.enable_model_cpu_offload()
     sd.enable_xformers_memory_efficient_attention()
 
-    model = ImageToImageBaseline(sd,
-                                 strength=args.strength,
-                                 prompt=prompt,
-                                 negative_prompt=nprompt,
-                                 cfg=args.cfg,
-                                 nsteps=args.nsteps).to(device)
-    # guidance_strength=args.guidance_strength
+    model = GuidedImageToImage(sd,
+                               strength=args.strength,
+                               prompt=prompt,
+                               negative_prompt=nprompt,
+                               cfg=args.cfg,
+                               nsteps=args.nsteps,
+                               guidance_strength=args.guidance_strength).to(device)
+
 
     def inference_function(xs):
         return model(xs,
-                     control_image=xs,
+                     control_image=2 * xs - 1,
                      controlnet_conditioning_scale=args.control_strength)
 
 
