@@ -12,7 +12,7 @@ import os
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
-def calculate_psnr_ssim(output_dir, gt_dir, quiet=False):
+def calculate_psnr_ssim(output_dir, gt_dir, quiet=False, return_list=False):
     """Computes PSNR and SSIM given images saved in two directories."""
     transform = transforms.ToTensor()
     # psnr = PeakSignalNoiseRatio(data_range=1, dim=(0, 1, 2), reduction="sum")
@@ -20,13 +20,12 @@ def calculate_psnr_ssim(output_dir, gt_dir, quiet=False):
     psnr = PeakSignalNoiseRatio(data_range=1)
     ssim = StructuralSimilarityIndexMeasure(data_range=1)
 
-    psnr_total = 0
-    ssim_total = 0
-    count = 0
-
     it = sorted(os.listdir(output_dir))
     if not quiet:
         it = tqdm(it, desc="Computing PSNR and SSIM")
+
+    psnrs = []
+    ssims = []
 
     for f in it:
         out_im = Image.open(os.path.join(output_dir, f))
@@ -39,11 +38,12 @@ def calculate_psnr_ssim(output_dir, gt_dir, quiet=False):
         out_im = transform(out_im)[None]
         gt_im = transform(gt_im)[None]
 
-        psnr_total += psnr(out_im, gt_im)
-        ssim_total += ssim(out_im, gt_im)
-        count += 1
+        psnrs.append(psnr(out_im, gt_im).item())
+        ssims.append(ssim(out_im, gt_im).item())
 
-    return (psnr_total.item() / count, ssim_total.item() / count)
+    if return_list:
+        return psnrs, ssims
+    return sum(psnrs) / len(psnrs), sum(ssims) / len(ssims)
 
 
 def inference_on_dataset(model, dataset, out_dir, batch_size):
