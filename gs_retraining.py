@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 
 
-def random_tranform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_rotation: float = np.pi / 4):
+def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_rotation: float = np.pi / 4):
     # Generates random camera poses given distribution of previous poses
     translations = dataset[:, :3, 3]
     new_translations = np.random.normal(
@@ -17,7 +17,7 @@ def random_tranform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_
         size=(num_transforms, 3)
     )
 
-    rotations_matrices = []
+    rotation_matrices = []
 
     # Pose of default OpenGL camera
     initial_pose = np.array([0, 0, -1])
@@ -38,11 +38,11 @@ def random_tranform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_
             [-np.sin(random_rotation), 0, np.cos(random_rotation)]
         ]) @ rotation_matrix
 
-        rotations_matrices.append(rotation_matrix)
+        rotation_matrices.append(rotation_matrix)
 
     return [
         np.vstack((np.hstack((rotation_matrix, rotation_matrix @ translation[:, None])), [0, 0, 0, 1]))
-        for rotation_matrix, translation in zip(rotations_matrices, new_translations)
+        for rotation_matrix, translation in zip(rotation_matrices, new_translations)
     ]
 
 
@@ -53,7 +53,7 @@ def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num
             pass
         case "random":
             # Chooses random poses
-            transformations = random_tranform_matrices(np.array([frame["transform_matrix"] for frame in prev_frames]), num_transforms=num_frames)
+            transformations = random_transform_matrices(np.array([frame["transform_matrix"] for frame in prev_frames]), num_transforms=num_frames)
         case _:
             raise ValueError(f"Unknown strategy {strategy}")
         
@@ -67,9 +67,9 @@ def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num
     ]
 
     # Generate blank ground-truth images
-    h, w = cv2.imread(os.path.join(data_dir, prev_frames[0]["file_path"])).shape[:2]
+    h, w = cv2.imread(os.path.join(data_dir, f"{prev_frames[0]['file_path']}.png")).shape[:2]
     for i in range(num_frames):
-        cv2.imwrite(os.path.join(data_dir, f"./train/render_{idx}_{i}"), np.zeros((h, w, 3)))
+        cv2.imwrite(os.path.join(data_dir, f"./train/render_{idx}_{i}.png"), np.zeros((h, w, 3)))
 
     return new_frames
 
@@ -110,6 +110,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
     subprocess.Popen((
         f"python render.py -s {transforms_file} "
         f"-m {model_path}"
+        "--skip_test"
     ),
         shell=True
     ).wait()
