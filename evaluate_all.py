@@ -37,14 +37,14 @@ def all_keys(names):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dir", type=str, help="Root directory", required=True)
-    parser.add_argument("-gt", "--gt", type=str, help="Ground truth directory", required=True)
+    parser.add_argument("-gt", "--gt", type=str, help="Ground truth directory", default="gt")
     args = parser.parse_args()
 
     f = os.listdir(args.dir)
     kmap = all_keys(f)
     f = sorted(f, key=lambda i: kmap[i])
 
-    out_file = "out/results"
+    out_file = os.path.join(args.dir, "results")
     d = {}
     if os.path.isfile(out_file):
         d = pickle.load(open(out_file, "rb"))
@@ -54,13 +54,13 @@ if __name__ == "__main__":
         if not os.path.isfile(os.path.join(args.dir, folder, "0.png")):
             print("Skipping", folder)
             continue
-        if os.path.join(args.dir, folder) == args.gt:  # (wont work for relative paths etc but not that deep)
+        if folder == args.gt:  # (wont work for relative paths etc but not that deep)
             print("Skipping GT folder:", folder)
             continue
         if folder in d:
             psnr, ssim = d[folder]
         else:
-            psnr, ssim = util.calculate_psnr_ssim(os.path.join(args.dir, folder), args.gt, quiet=True)
+            psnr, ssim = util.calculate_psnr_ssim(os.path.join(args.dir, folder), os.path.join(args.dir, args.gt), quiet=True)
 
         nc = len(key(folder))
         if nc != pc: print()

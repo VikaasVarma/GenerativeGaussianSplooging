@@ -14,9 +14,9 @@ def query(folder):
     if folder in d:
         out = d[folder]
     else:
-        out = util.calculate_psnr_ssim(os.path.join(args.dir, folder), args.gt, IND, quiet=True, return_list=True)
+        out = util.calculate_psnr_ssim(os.path.join(args.dir, folder), args.gt, [IND], quiet=True, return_list=True)[0]
         d[folder] = out
-    return out
+    return np.array(out)
 
 
 if __name__ == "__main__":
@@ -34,15 +34,15 @@ if __name__ == "__main__":
     if os.path.isfile(out_file):
         d = pickle.load(open(out_file, "rb"))
 
-    IND = 3
+    IND = 0
     names = ["PSNR", "SSIM", "LPIPS", "MS-SSIM"]
 
     out_i = query("input")
     ord_i = np.argsort(out_i)
 
-    fid = util.calculate_fid(output_dir=os.path.join(args.dir, "input"),
-                             gt_dir=args.gt)
-    print("input", "\t:", fid)
+    # fid = util.calculate_fid(output_dir=os.path.join(args.dir, "input"),
+    #                          gt_dir=args.gt)
+    # print("input", "\t:", fid)
 
     for folder in f:
         if not os.path.isfile(os.path.join(args.dir, folder, "0.png")):
@@ -51,13 +51,12 @@ if __name__ == "__main__":
         if os.path.join(args.dir, folder) == args.gt:  # (wont work for relative paths etc but not that deep)
             print("Skipping GT folder:", folder)
             continue
-        import random
         if not folder.startswith("cnet_im2im"): continue
 
-        f = util.calculate_fid(output_dir=os.path.join(args.dir, folder),
-                               gt_dir=args.gt)
-        print(folder, "\t:", f)
-        continue
+        # f = util.calculate_fid(output_dir=os.path.join(args.dir, folder),
+        #                        gt_dir=args.gt)
+        # print(folder, "\t:", f)
+        # continue
 
         out = query(folder)
 
@@ -72,6 +71,6 @@ if __name__ == "__main__":
             plt.show()
 
             import time
-            time.sleep(1.0)
+            time.sleep(2.0)
 
     pickle.dump(d, open(out_file, "wb"))
