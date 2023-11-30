@@ -47,11 +47,48 @@ def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max
     ]
 
 
+def perturb_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_rotation: float = np.pi / 4):
+    rotations = []
+    translations = []
+
+    translation_perturb_size = dataset[:, :3, 3].abs().mean() / 10
+    for _ in num_transforms:
+        transform = dataset[np.random.choice(len(dataset))]
+
+        translation = transform[:3, 3]
+        rotation = transform[:3, :3]
+
+        # Perturb translation
+        translation += np.random.normal(0, translation_perturb_size, size=3)
+
+        # Perturb rotation
+        random_y_rotation = (np.random.random() * 2 - 1) * np.pi / 3
+        random_x_rotation = (np.random.random() * 2 - 1) * np.pi / 8
+        rotation = np.array([
+            [np.cos(random_y_rotation), 0, np.sin(random_y_rotation)],
+            [0, 1, 0],
+            [-np.sin(random_y_rotation), 0, np.cos(random_y_rotation)]
+        ]) @ rotation @ np.array([
+            [1, 0, 0],
+            [0, np.cos(random_x_rotation), -np.sin(random_x_rotation)],
+            [0, np.sin(random_x_rotation), np.cos(random_x_rotation)]
+        ])
+
+        rotations.append(rotation)
+        translations.append(translation)
+
+    return [
+        np.vstack((np.hstack((rotation, translation[:, None])), [0, 0, 0, 1]))
+        for rotation, translation in zip(rotations, translations)
+    ]
+
 def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num_frames: int = 10):
     match strategy:
         case "fill":
             # Picks poses farthest from existing poses
             pass
+        case "perturb":
+            transformations = perturb_transform_matrices(np.array([frame["transform_matrix"] for frame in prev_frames]), num_transforms=num_frames)
         case "random":
             # Chooses random poses
             transformations = random_transform_matrices(np.array([frame["transform_matrix"] for frame in prev_frames]), num_transforms=num_frames)
@@ -109,7 +146,7 @@ def apply_diffusion(render_dir: str, out_dir: str):
     ).wait()
 
 
-def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, strategy: str = "random", num_new_frames: int = 10):
+def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, strategy: str = "perturb", num_new_frames: int = 10):
     transforms_file = os.path.join(data_dir, 'transforms_train.json')
     with open(transforms_file, 'r') as f:
         transforms = json.load(f)
@@ -135,6 +172,10 @@ def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, st
 
     for i in range(len(new_frames)):
         shutil.copyfile(os.path.join(out_dir, f"{i:05d}.png"), os.path.join(data_dir, f"./train/render_{idx}_{i}.png"))
+
+    transforms["frames"] += new_frames
+    with open(transforms_file, 'w') as f:
+        json.dump(transforms, f)
 
 
 def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int, num_new_frames: int):
