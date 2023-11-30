@@ -67,9 +67,9 @@ def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num
     ]
 
     # Generate blank ground-truth images
-    h, w = cv2.imread(os.path.join(data_dir, 'train', prev_frames[0]["file_path"])).shape[:2]
+    h, w = cv2.imread(os.path.join(data_dir, prev_frames[0]["file_path"])).shape[:2]
     for i in range(num_frames):
-        cv2.imwrite(os.path.join(data_dir, 'train', prev_frames[0]["file_path"]), np.zeros((h, w, 3)))
+        cv2.imwrite(os.path.join(data_dir, prev_frames[0]["file_path"]), np.zeros((h, w, 3)))
 
     return new_frames
 
