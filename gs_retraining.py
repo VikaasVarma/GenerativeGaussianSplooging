@@ -2,6 +2,7 @@ import argparse
 import subprocess
 import os
 import json
+import shutil
 from copy import deepcopy
 
 import numpy as np
@@ -41,7 +42,7 @@ def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max
         rotation_matrices.append(rotation_matrix)
 
     return [
-        np.vstack((np.hstack((rotation_matrix, rotation_matrix @ translation[:, None])), [0, 0, 0, 1]))
+        np.vstack((np.hstack((rotation_matrix, translation[:, None])), [0, 0, 0, 1]))
         for rotation_matrix, translation in zip(rotation_matrices, new_translations)
     ]
 
@@ -130,18 +131,9 @@ def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, st
     render_dir = os.path.join(model_path, "train", f"ours_{iterations}", "renders")
     out_dir = os.path.join(model_path, "train", f"ours_{iterations}", "processed")
     apply_diffusion(render_dir, out_dir)
-    # diffused_samples = apply_diffusion([frame["file_path"] for frame in new_frames])
 
-    with open(transforms_file, 'w') as f:
-        # apply_diffusion preserves file names in the output directory
-        for frame in new_frames:
-            _, name = os.path.split(frame["file_path"])
-            frame["file_path"] = os.path.join(out_dir, name)
-
-        transforms["frames"] += new_frames
-        json.dump(transforms, f)
-
-    return [frame["file_path"] for frame in new_frames]
+    for i in range(len(new_frames)):
+        shutil.copyfile(os.path.join(out_dir, f"{i:05d}.png"), os.path.join(data_dir, f"./train/render_{idx}_{i}.png"))
 
 
 def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int):
