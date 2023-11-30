@@ -51,7 +51,7 @@ def perturb_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, ma
     rotations = []
     translations = []
 
-    translation_perturb_size = dataset[:, :3, 3].abs().mean() / 10
+    translation_perturb_size = np.abs(dataset[:, :3, 3]).mean() / 10
     for _ in num_transforms:
         transform = dataset[np.random.choice(len(dataset))]
 
