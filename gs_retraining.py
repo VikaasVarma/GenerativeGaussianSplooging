@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 
 
-def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_rotation: float = 0):
+def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_rotation: float = np.pi / 4):
     # Generates random camera poses given distribution of previous poses
     translations = dataset[:, :3, 3]
     new_translations = np.random.normal(
@@ -149,11 +149,11 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
         train_model(
             data_dir,
             os.path.join(model_path, 'model'),
-            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{train_iterations}.ply'),
-            train_iterations
+            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{train_iterations * (i + 1)}.pth'),
+            train_iterations * (i + 1)
         )
 
-        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=train_iterations, idx=i)
+        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=train_iterations * (i + 1), idx=i)
 
 
 if __name__ == "__main__":
