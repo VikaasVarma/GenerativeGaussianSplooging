@@ -122,12 +122,12 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
     for i in range(retrain_iterations):
         train_model(
             data_dir,
-            os.path.join(model_path, f"checkpoint_{i}.pth"),
-            None if i == 0 else os.path.join(model_path, f"checkpoint_{i - 1}.pth"),
+            os.path.join(model_path, str(i)),
+            None if i == 0 else os.path.join(model_path, str(i - 1)),
             train_iterations
         )
 
-        render_samples(data_dir, model_path, idx = i)
+        render_samples(data_dir, os.path.join(model_path, str(i)), idx = i)
 
     
 
