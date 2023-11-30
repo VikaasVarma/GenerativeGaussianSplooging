@@ -89,8 +89,8 @@ def train_model(data_dir: str, model_path: str, checkpoint: str | None, iteratio
 def apply_diffusion(render_dir: str, out_dir: str):
     # Uses ControlNet image-to-image as this is the best performing method
 
-    # This is a pretty ugly workaround, but ideally we'd be working inside the repo with this as a submodule
-    repo_root = "../GenerativeGaussianSplooging"
+    # This is a bit ugly but whatever
+    repo_root = "../"
 
     # (probably easiest to use subprocess)
     subprocess.Popen((
