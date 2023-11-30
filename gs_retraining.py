@@ -129,10 +129,10 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
 def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int):
     # Empty val and test transform files
     with open(os.path.join(data_dir, 'transforms_val.json'), 'w') as f:
-        json.dump({"frames": []}, f)
-        
+        json.dump({"camera_angle_x": 0,  "frames": []}, f)
+
     with open(os.path.join(data_dir, 'transforms_test.json'), 'w') as f:
-        json.dump({"frames": []}, f)
+        json.dump({"camera_angle_x": 0, "frames": []}, f)
 
     for i in range(retrain_iterations):
         train_model(
