@@ -109,7 +109,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
 
     subprocess.Popen((
         f"python render.py -s {transforms_file} "
-        f"-m {model_path}"
+        f"-m {model_path} "
         "--skip_test"
     ),
         shell=True
