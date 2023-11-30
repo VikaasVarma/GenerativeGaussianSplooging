@@ -52,7 +52,7 @@ def generate_transforms(strategy: str, prev_frames: str, idx, num_frames: int = 
             pass
         case "random":
             # Chooses random poses
-            transformations = random_tranform_matrices(np.array([frame["transform"] for frame in prev_frames]), num_transforms=num_frames)
+            transformations = random_tranform_matrices(np.array([frame["transform_matrix"] for frame in prev_frames]), num_transforms=num_frames)
         case _:
             raise ValueError(f"Unknown strategy {strategy}")
         
