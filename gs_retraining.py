@@ -194,7 +194,7 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
             warmup_steps if i == 0 else warmup_steps + train_iterations * (i + 1)
         )
 
-        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=warmup_steps + train_iterations * (i + 1), idx=i, num_new_frames=num_new_frames)
+        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=warmup_steps + train_iterations * i, idx=i, num_new_frames=num_new_frames)
 
 
 if __name__ == "__main__":
