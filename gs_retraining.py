@@ -91,16 +91,17 @@ def apply_diffusion(render_dir: str, out_dir: str):
 
     # This is a bit ugly but whatever
     repo_root = "../"
+    batch_size = 1
 
     # (probably easiest to use subprocess)
     subprocess.Popen((
-        f"python {os.path.join(repo_root, 'cnet_im2im.py')} -s {args.denoise_strength}"
-        f"--control-strength {args.control_strength}"
-        f"-d {render_dir}"
-        f"-o {out_dir}"
-        "-b 4"
-        f"--controlnet {args.controlnet_path}"
-        "-m runwayml/stable-diffusion-v1-5"  # will download on first run
+        f"python {os.path.join(repo_root, 'cnet_im2im.py')} -s {args.denoise_strength} "
+        f"--control-strength {args.control_strength} "
+        f"-d {render_dir} "
+        f"-o {out_dir} "
+        f"-b {batch_size} "
+        f"--controlnet {args.controlnet_path} "
+        "-m runwayml/stable-diffusion-v1-5 "  # will download on first run
     ),
         shell=True
     ).wait()

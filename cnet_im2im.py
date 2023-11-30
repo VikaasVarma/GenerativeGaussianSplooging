@@ -24,9 +24,6 @@ if __name__ == "__main__":
     prompt = " ".join(args.prompt) if args.prompt is not None else None
     nprompt = " ".join(args.nprompt) if args.nprompt is not None else None
 
-    print("Writing to", args.out)
-    os.makedirs(args.out, exist_ok=True)
-
     controlnet = diffusers.ControlNetModel.from_single_file(args.controlnet, torch_dtype=torch.float16).to(util.device)
     sd = diffusers.StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
         args.model,
@@ -43,6 +40,9 @@ if __name__ == "__main__":
                                  cfg=args.cfg,
                                  nsteps=args.nsteps).to(device)
     # guidance_strength=args.guidance_strength
+
+    print("Writing to", args.out)
+    os.makedirs(args.out, exist_ok=True)
 
     transform = transforms.ToTensor()
     to_pil = transforms.ToPILImage()
