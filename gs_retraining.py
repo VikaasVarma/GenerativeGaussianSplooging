@@ -107,7 +107,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
         shell=True
     ).wait()
 
-    diffused_samples = apply_diffusion(data_dir, [frame["file_path"] for frame in new_frames])
+    diffused_samples = apply_diffusion([frame["file_path"] for frame in new_frames])
 
     with open(transforms_file, 'w') as f:
         for frame, sample in zip(new_frames, diffused_samples):
