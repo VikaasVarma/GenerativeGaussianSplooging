@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import util
 
 
-# Flips, crops and changes hue
+# Flips, crops
 def get_transform(size=512, crop_size=0.3):
     t = transforms.Compose([
         transforms.ToTensor(),
