@@ -81,7 +81,8 @@ def train_model(data_dir: str, model_path: str, checkpoint: str | None, iteratio
         f"python train.py -s {data_dir} " +
         f"-m {model_path} " +
         ("" if checkpoint is None else f"--start_checkpoint {checkpoint} ") +
-        f"--iterations {iterations}"
+        f"--iterations {iterations} "
+        f"--checkpoint_iterations {iterations}"
     ),
         shell=True
     ).wait()
@@ -148,7 +149,7 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
         train_model(
             data_dir,
             os.path.join(model_path, 'model'),
-            None if i == 0 else os.path.join(model_path, 'model', 'point_cloud', f'iteration_{train_iterations}', 'point_cloud.ply'),
+            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{train_iterations}.ply'),
             train_iterations
         )
 
