@@ -5,6 +5,7 @@ import json
 from copy import deepcopy
 
 import numpy as np
+import cv2
 
 
 def random_tranform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_rotation: float = np.pi / 4):
@@ -64,6 +65,12 @@ def generate_transforms(strategy: str, prev_frames: str, idx, num_frames: int = 
         }
         for i, transformation in enumerate(transformations)
     ]
+
+    # Generate blank ground-truth images
+    h, w = cv2.imread(prev_frames[0]["file_path"]).shape[:2]
+    for i in range(num_frames):
+        cv2.imwrite(f"render_{idx}_{i}", np.zeros((h, w, 3)))
+
     return new_frames
 
 
