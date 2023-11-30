@@ -30,7 +30,7 @@ def random_tranform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_
         rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
         
         # Rotate camera randomly around y axis
-        random_rotation = (np.random() * 2 - 1) * max_rotation
+        random_rotation = (np.random.random() * 2 - 1) * max_rotation
         rotation_matrix = np.array([
             [np.cos(random_rotation), 0, np.sin(random_rotation)],
             [0, 1, 0],
