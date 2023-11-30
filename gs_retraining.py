@@ -127,6 +127,13 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
     return [frame["file_path"] for frame in new_frames]
 
 def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int):
+    # Empty val and test transform files
+    with open(os.path.join(data_dir, 'transforms_val.json'), 'w') as f:
+        json.dump({"frames": []}, f)
+        
+    with open(os.path.join(data_dir, 'transforms_test.json'), 'w') as f:
+        json.dump({"frames": []}, f)
+
     for i in range(retrain_iterations):
         train_model(
             data_dir,
