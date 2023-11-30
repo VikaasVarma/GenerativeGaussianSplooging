@@ -80,7 +80,7 @@ def train_model(data_dir: str, model_path: str, checkpoint: str | None, iteratio
     subprocess.Popen((
         f"python train.py -s {data_dir} " +
         f"-m {model_path} " +
-        ("" if checkpoint is None else f"--start_checkpoint {checkpoint}") +
+        ("" if checkpoint is None else f"--start_checkpoint {checkpoint} ") +
         f"--iterations {iterations}"
     ),
         shell=True
