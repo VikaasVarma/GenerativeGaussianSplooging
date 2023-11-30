@@ -4,3 +4,6 @@
 [submodule "guided-diffusion"]
 	path = guided-diffusion
 	url = https://github.com/zzbuzzard/guided-diffusion
+[submodule "gaussian-splatting"]
+	path = gaussian-splatting
+	url = https://github.com/VikaasVarma/gaussian-splatting.git
