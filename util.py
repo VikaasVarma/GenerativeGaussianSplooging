@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from PIL import Image
 from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure,\
-    LearnedPerceptualImagePatchSimilarity, MultiScaleStructuralSimilarityIndexMeasure, FrechetInceptionDistance
+    LearnedPerceptualImagePatchSimilarity, MultiScaleStructuralSimilarityIndexMeasure#, FrechetInceptionDistance
 import torch.utils.data as dutils
 from tqdm import tqdm
 from torchvision import transforms
