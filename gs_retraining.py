@@ -149,7 +149,7 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
         train_model(
             data_dir,
             os.path.join(model_path, 'model'),
-            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{train_iterations * (i + 1)}.pth'),
+            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{train_iterations * i}.pth'),
             train_iterations * (i + 1)
         )
 
