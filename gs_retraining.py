@@ -76,15 +76,14 @@ def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num
 
 def train_model(data_dir: str, model_path: str, checkpoint: str | None, iterations: int):
 
-    subprocess.check_output((
-            f"python train.py -s {data_dir} " +
-            f"-m {model_path} " +
-            ("" if checkpoint is None else f"--start_checkpoint {checkpoint} ") +
-            f"--iterations {iterations}"
-        ),
-        stderr=subprocess.STDOUT,
+    subprocess.Popen((
+        f"python train.py -s {data_dir} " +
+        f"-m {model_path} " +
+        ("" if checkpoint is None else f"--start_checkpoint {checkpoint} ") +
+        f"--iterations {iterations}"
+    ),
         shell=True
-    )
+    ).wait()
 
 
 def apply_diffusion(samples: list[str]):    
@@ -108,14 +107,13 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
         _transforms["frames"] = new_frames
         json.dump(_transforms, f)
 
-    subprocess.check_output((
-            f"python render.py -s {transforms_file} "
-            f"-m {model_path} "
-            "--skip_test",
-        ),
-        stderr=subprocess.STDOUT,
+    subprocess.Popen((
+        f"python render.py -s {transforms_file} "
+        f"-m {model_path} "
+        "--skip_test"
+    ),
         shell=True
-    )
+    ).wait()
 
     diffused_samples = apply_diffusion([frame["file_path"] for frame in new_frames])
 
