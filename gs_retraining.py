@@ -190,8 +190,8 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
         train_model(
             data_dir,
             os.path.join(model_path, 'model'),
-            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{warmup_steps + train_iterations * i}.pth'),
-            warmup_steps if i == 0 else warmup_steps + train_iterations * (i + 1)
+            None if i == 0 else os.path.join(model_path, 'model', f'chkpnt{warmup_steps + train_iterations * (i - 1)}.pth'),
+            warmup_steps if i == 0 else warmup_steps + train_iterations * i
         )
 
         render_samples(data_dir, os.path.join(model_path, 'model'), iterations=warmup_steps + train_iterations * i, idx=i, num_new_frames=num_new_frames)
