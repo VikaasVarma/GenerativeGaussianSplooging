@@ -47,7 +47,7 @@ def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max
     ]
 
 
-def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num_frames: int = 30):
+def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num_frames: int = 10):
     match strategy:
         case "fill":
             # Picks poses farthest from existing poses
@@ -147,12 +147,12 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
     for i in range(retrain_iterations):
         train_model(
             data_dir,
-            os.path.join(model_path, str(i)),
-            None if i == 0 else os.path.join(model_path, str(i - 1)),
+            os.path.join(model_path, 'model'),
+            None if i == 0 else os.path.join(model_path, 'model', 'point_cloud', f'iteration_{train_iterations}', 'point_cloud.ply'),
             train_iterations
         )
 
-        render_samples(data_dir, os.path.join(model_path, str(i)), iterations=train_iterations, idx=i)
+        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=train_iterations, idx=i)
 
 
 if __name__ == "__main__":
