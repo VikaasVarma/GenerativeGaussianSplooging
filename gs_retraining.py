@@ -93,7 +93,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
     with open(transforms_file, 'r') as f:
         transforms = json.load(f)
     
-    new_frames = generate_transforms(strategy, transforms["prev_frames"], idx)
+    new_frames = generate_transforms(strategy, transforms["frames"], idx)
     
     with open(transforms_file, 'w') as f:
         _transforms = deepcopy(transforms)
