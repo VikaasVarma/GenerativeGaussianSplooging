@@ -79,7 +79,7 @@ def train_model(data_dir: str, model_path: str, checkpoint: str | None, iteratio
     subprocess.check_output((
             f"python train.py -s {data_dir} " +
             f"-m {model_path} " +
-            ("" if checkpoint is None else f"--start_checkpoint {checkpoint}") +
+            ("" if checkpoint is None else f"--start_checkpoint {checkpoint} ") +
             f"--iterations {iterations}"
         ),
         stderr=subprocess.STDOUT,
