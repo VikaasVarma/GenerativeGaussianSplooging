@@ -46,7 +46,7 @@ def random_tranform_matrices(dataset: np.ndarray, num_transforms: int = 30, max_
     ]
 
 
-def generate_transforms(strategy: str, prev_frames: str, idx, num_frames: int = 30):
+def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num_frames: int = 30):
     match strategy:
         case "fill":
             # Picks poses farthest from existing poses
@@ -67,9 +67,9 @@ def generate_transforms(strategy: str, prev_frames: str, idx, num_frames: int = 
     ]
 
     # Generate blank ground-truth images
-    h, w = cv2.imread(prev_frames[0]["file_path"]).shape[:2]
+    h, w = cv2.imread(os.path.join(data_dir, 'train', prev_frames[0]["file_path"])).shape[:2]
     for i in range(num_frames):
-        cv2.imwrite(f"render_{idx}_{i}", np.zeros((h, w, 3)))
+        cv2.imwrite(os.path.join(data_dir, 'train', prev_frames[0]["file_path"]), np.zeros((h, w, 3)))
 
     return new_frames
 
@@ -100,7 +100,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
     with open(transforms_file, 'r') as f:
         transforms = json.load(f)
     
-    new_frames = generate_transforms(strategy, transforms["frames"], idx)
+    new_frames = generate_transforms(strategy, data_dir, transforms["frames"], idx)
     
     with open(transforms_file, 'w') as f:
         _transforms = deepcopy(transforms)
