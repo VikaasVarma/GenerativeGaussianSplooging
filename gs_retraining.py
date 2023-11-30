@@ -84,7 +84,7 @@ def train_model(data_dir: str, model_path: str, checkpoint: str | None, iteratio
         ),
         stderr=subprocess.STDOUT,
         shell=True
-    ).wait()
+    )
 
 
 def apply_diffusion(samples: list[str]):    
@@ -115,7 +115,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
         ),
         stderr=subprocess.STDOUT,
         shell=True
-    ).wait()
+    )
 
     diffused_samples = apply_diffusion([frame["file_path"] for frame in new_frames])
 
