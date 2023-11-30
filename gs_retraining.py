@@ -109,12 +109,12 @@ def apply_diffusion(render_dir: str, out_dir: str):
     ).wait()
 
 
-def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, strategy: str = "random"):
+def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, strategy: str = "random", num_new_frames: int = 10):
     transforms_file = os.path.join(data_dir, 'transforms_train.json')
     with open(transforms_file, 'r') as f:
         transforms = json.load(f)
     
-    new_frames = generate_transforms(strategy, data_dir, transforms["frames"], idx)
+    new_frames = generate_transforms(strategy, data_dir, transforms["frames"], idx, num_new_frames)
     
     with open(transforms_file, 'w') as f:
         _transforms = deepcopy(transforms)
@@ -137,7 +137,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, st
         shutil.copyfile(os.path.join(out_dir, f"{i:05d}.png"), os.path.join(data_dir, f"./train/render_{idx}_{i}.png"))
 
 
-def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int):
+def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int, num_new_frames: int):
     # Empty val and test transform files
     with open(os.path.join(data_dir, 'transforms_val.json'), 'w') as f:
         json.dump({"camera_angle_x": 0,  "frames": []}, f)
@@ -153,7 +153,7 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
             train_iterations * (i + 1)
         )
 
-        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=train_iterations * (i + 1), idx=i)
+        render_samples(data_dir, os.path.join(model_path, 'model'), iterations=train_iterations * (i + 1), idx=i, num_new_frames=num_new_frames)
 
 
 if __name__ == "__main__":
@@ -166,6 +166,7 @@ if __name__ == "__main__":
     parser.add_argument("--controlnet_path", type=str, required=True, help="ControlNet model path")
     parser.add_argument("--denoise-strength", type=float, default=0.6, help="Denoising strength (0 to 1).")
     parser.add_argument("--control-strength", type=float, default=1.5, help="Control strength. 1-2 seems to give good results.")
+    parser.add_argument("--num-new-frames", type=int, default=10, help="Number of new frames to generate per existing frame")
 
     args = parser.parse_args()
-    train(args.data_dir, args.checkpoint_path, args.train_iterations, args.retrain_iterations)
+    train(args.data_dir, args.checkpoint_path, args.train_iterations, args.retrain_iterations, args.num_new_frames)
