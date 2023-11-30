@@ -12,11 +12,11 @@ import numpy as np
 
 def query(folder):
     if folder in d:
-        psnrs, ssims = d[folder]
+        out = d[folder]
     else:
-        psnrs, ssims = util.calculate_psnr_ssim(os.path.join(args.dir, folder), args.gt, quiet=True, return_list=True)
-        d[folder] = (psnrs, ssims)
-    return psnrs, ssims
+        out = util.calculate_psnr_ssim(os.path.join(args.dir, folder), args.gt, IND, quiet=True, return_list=True)
+        d[folder] = out
+    return out
 
 
 if __name__ == "__main__":
@@ -34,11 +34,15 @@ if __name__ == "__main__":
     if os.path.isfile(out_file):
         d = pickle.load(open(out_file, "rb"))
 
-    psnrs_i, ssims_i = query("input")
-    psnrs_i = np.array(psnrs_i)
-    ssims_i = np.array(ssims_i)
-    ord_p = np.argsort(psnrs_i)
-    ord_s = np.argsort(ssims_i)
+    IND = 3
+    names = ["PSNR", "SSIM", "LPIPS", "MS-SSIM"]
+
+    out_i = query("input")
+    ord_i = np.argsort(out_i)
+
+    fid = util.calculate_fid(output_dir=os.path.join(args.dir, "input"),
+                             gt_dir=args.gt)
+    print("input", "\t:", fid)
 
     for folder in f:
         if not os.path.isfile(os.path.join(args.dir, folder, "0.png")):
@@ -48,26 +52,25 @@ if __name__ == "__main__":
             print("Skipping GT folder:", folder)
             continue
         import random
-        if random.uniform(0, 1) < 0.8: continue
+        if not folder.startswith("cnet_im2im"): continue
 
-        psnrs, ssims = query(folder)
+        f = util.calculate_fid(output_dir=os.path.join(args.dir, folder),
+                               gt_dir=args.gt)
+        print(folder, "\t:", f)
+        continue
 
-        if len(psnrs) == len(psnrs_i):
-            ord_p2 = np.argsort(np.array(psnrs))
-            ord_s2 = np.argsort(np.array(ssims))
-            xs = np.arange(len(psnrs))
+        out = query(folder)
 
-            plt.scatter(xs, psnrs_i[ord_p], marker='o')
-            plt.scatter(xs, np.array(psnrs)[ord_p], marker='x')
+        if len(out) == len(out_i):
+            ord2 = np.argsort(np.array(out))
+            xs = np.arange(len(out))
+
+            plt.scatter(xs, out_i[ord_i], marker='o')
+            plt.scatter(xs, np.array(out)[ord_i], marker='x')
             plt.title(folder)
-            plt.ylabel("PSNR")
+            plt.ylabel(names[IND])
             plt.show()
 
-            # plt.scatter(xs, ssims_i[ord_s], marker='o')
-            # plt.scatter(xs, np.array(ssims)[ord_s], marker='x')
-            # plt.title(folder)
-            # plt.ylabel("SSIM")
-            # plt.show()
             import time
             time.sleep(1.0)
 

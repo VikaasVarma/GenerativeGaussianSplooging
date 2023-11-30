@@ -1,7 +1,8 @@
 import torch
 import numpy as np
 from PIL import Image
-from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure
+from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure,\
+    LearnedPerceptualImagePatchSimilarity, MultiScaleStructuralSimilarityIndexMeasure, FrechetInceptionDistance
 import torch.utils.data as dutils
 from tqdm import tqdm
 from torchvision import transforms
@@ -12,20 +13,47 @@ import os
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
-def calculate_psnr_ssim(output_dir, gt_dir, quiet=False, return_list=False):
+def calculate_fid(output_dir, gt_dir):
+    transform = transforms.ToTensor()
+    fid = FrechetInceptionDistance(feature=64, normalize=True).to(device)
+
+    it = sorted(os.listdir(output_dir))
+
+    n = len(it)
+    size = 128
+    gt_ims = torch.zeros((n, 3, size, size))
+    for ind, f in enumerate(it):
+        gt_im = Image.open(os.path.join(gt_dir, f)).resize((size, size))
+        gt_ims[ind] = transform(gt_im)
+    fid.update(gt_ims.to(device), real=True)
+
+    render_ims = torch.zeros((n, 3, size, size))
+    for ind, f in enumerate(it):
+        render_im = Image.open(os.path.join(output_dir, f)).resize((size, size))
+        render_ims[ind] = transform(render_im)
+    fid.update(render_ims.to(device), real=False)
+
+    return fid.compute().item()
+
+
+def calculate_psnr_ssim(output_dir, gt_dir, metric_index = [0, 1], quiet=False, return_list=False):
     """Computes PSNR and SSIM given images saved in two directories."""
     transform = transforms.ToTensor()
     # psnr = PeakSignalNoiseRatio(data_range=1, dim=(0, 1, 2), reduction="sum")
     # ssim = StructuralSimilarityIndexMeasure(data_range=data_range, reduction="sum")
-    psnr = PeakSignalNoiseRatio(data_range=1)
-    ssim = StructuralSimilarityIndexMeasure(data_range=1)
+    psnr = PeakSignalNoiseRatio(data_range=1).to(device)
+    ssim = StructuralSimilarityIndexMeasure(data_range=1).to(device)
+    lpips = LearnedPerceptualImagePatchSimilarity(net_type="squeeze").to(device)
+    msssim = MultiScaleStructuralSimilarityIndexMeasure().to(device)
+    metrics = [psnr, ssim, lpips, msssim]
+    ms = [metrics[i] for i in metric_index]
+    M = len(metric_index)
 
     it = sorted(os.listdir(output_dir))
     if not quiet:
         it = tqdm(it, desc="Computing PSNR and SSIM")
 
-    psnrs = []
-    ssims = []
+    out = [[] for _ in range(M)]
 
     for f in it:
         out_im = Image.open(os.path.join(output_dir, f))
@@ -35,15 +63,15 @@ def calculate_psnr_ssim(output_dir, gt_dir, quiet=False, return_list=False):
             print("Rescaling in", output_dir)
             out_im = out_im.resize((512, 512))
 
-        out_im = transform(out_im)[None]
-        gt_im = transform(gt_im)[None]
+        out_im = transform(out_im)[None].to(device)
+        gt_im = transform(gt_im)[None].to(device)
 
-        psnrs.append(psnr(out_im, gt_im).item())
-        ssims.append(ssim(out_im, gt_im).item())
+        for i in range(M):
+            out[i].append(ms[i](out_im, gt_im).item())
 
     if return_list:
-        return psnrs, ssims
-    return sum(psnrs) / len(psnrs), sum(ssims) / len(ssims)
+        return tuple(out)
+    return [sum(i) / len(i) for i in out]
 
 
 def inference_on_dataset(model, dataset, out_dir, batch_size):

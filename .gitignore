@@ -4,6 +4,7 @@ splats
 noisy_dataset
 models
 out
+out_example
 
 *.pyc
 .DS_store

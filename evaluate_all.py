@@ -36,8 +36,8 @@ def all_keys(names):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--dir", type=str, help="Root directory")
-    parser.add_argument("-gt", "--gt", type=str, help="Ground truth directory")
+    parser.add_argument("-d", "--dir", type=str, help="Root directory", required=True)
+    parser.add_argument("-gt", "--gt", type=str, help="Ground truth directory", required=True)
     args = parser.parse_args()
 
     f = os.listdir(args.dir)
