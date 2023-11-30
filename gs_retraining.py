@@ -23,7 +23,7 @@ def random_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, max
     initial_pose = np.array([0, 0, -1])
     for translation in new_translations:
         # Get rotation matrix pointing camera at origin
-        final_pose = -translation / np.linalg.norm(translation)
+        final_pose = translation / np.linalg.norm(translation)
         v = np.cross(initial_pose, final_pose)
         c = np.dot(initial_pose, final_pose)
         s = np.linalg.norm(v)
