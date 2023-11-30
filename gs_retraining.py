@@ -59,7 +59,7 @@ def generate_transforms(strategy: str, data_dir: str, prev_frames: str, idx, num
         
     new_frames = [
         {
-            "file_path": f"render_{idx}_{i}",
+            "file_path": f"./train/render_{idx}_{i}",
             "rotation": prev_frames[0]["rotation"],
             "transform_matrix": transformation.tolist(),
         }
