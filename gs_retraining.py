@@ -60,7 +60,7 @@ def generate_transforms(strategy: str, prev_frames: str, idx, num_frames: int = 
         {
             "file_path": f"render_{idx}_{i}",
             "rotation": prev_frames[0]["rotation"],
-            "transformation_matrix": transformation.tolist(),
+            "transform_matrix": transformation.tolist(),
         }
         for i, transformation in enumerate(transformations)
     ]
