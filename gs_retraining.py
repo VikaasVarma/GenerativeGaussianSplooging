@@ -86,16 +86,27 @@ def train_model(data_dir: str, model_path: str, checkpoint: str | None, iteratio
     ).wait()
 
 
-def apply_diffusion(samples: list[str]):    
-    for sample in samples:
-        # TODO: Apply diffusion to sample
-        pass
+def apply_diffusion(render_dir: str, out_dir: str):
+    # Uses ControlNet image-to-image as this is the best performing method
 
-    # TODO: return filepaths of new images
-    return []
+    # This is a pretty ugly workaround, but ideally we'd be working inside the repo with this as a submodule
+    repo_root = "../GenerativeGaussianSplooging"
+
+    # (probably easiest to use subprocess)
+    subprocess.Popen((
+        f"python {os.path.join(repo_root, 'cnet_im2im.py')} -s {args.denoise_strength}"
+        f"--control-strength {args.control_strength}"
+        f"-d {render_dir}"
+        f"-o {out_dir}"
+        "-b 4"
+        f"--controlnet {args.controlnet_path}"
+        "-m runwayml/stable-diffusion-v1-5"  # will download on first run
+    ),
+        shell=True
+    ).wait()
 
 
-def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "random"):
+def render_samples(data_dir: str, model_path: str, idx: int, iterations: int, strategy: str = "random"):
     transforms_file = os.path.join(data_dir, 'transforms_train.json')
     with open(transforms_file, 'r') as f:
         transforms = json.load(f)
@@ -115,16 +126,22 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
         shell=True
     ).wait()
 
-    diffused_samples = apply_diffusion([frame["file_path"] for frame in new_frames])
+    render_dir = os.path.join(model_path, "train", f"ours_{iterations}", "renders")
+    out_dir = os.path.join(model_path, "train", f"ours_{iterations}", "processed")
+    apply_diffusion(render_dir, out_dir)
+    # diffused_samples = apply_diffusion([frame["file_path"] for frame in new_frames])
 
     with open(transforms_file, 'w') as f:
-        for frame, sample in zip(new_frames, diffused_samples):
-            frame["file_path"] = sample
+        # apply_diffusion preserves file names in the output directory
+        for frame in new_frames:
+            _, name = os.path.split(frame["file_path"])
+            frame["file_path"] = os.path.join(out_dir, name)
 
         transforms["frames"] += new_frames
         json.dump(transforms, f)
 
     return [frame["file_path"] for frame in new_frames]
+
 
 def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterations: int):
     # Empty val and test transform files
@@ -142,9 +159,8 @@ def train(data_dir: str, model_path: str, train_iterations: int, retrain_iterati
             train_iterations
         )
 
-        render_samples(data_dir, os.path.join(model_path, str(i)), idx = i)
+        render_samples(data_dir, os.path.join(model_path, str(i)), iterations=train_iterations, idx=i)
 
-    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="args")
@@ -153,6 +169,9 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_path", type=str, default="../checkpoints", help="output path")
     parser.add_argument("--train_iterations", type=int, default=3_000, help="number of iterations before retraining")
     parser.add_argument("--retrain_iterations", type=int, default=3, help="number of retraining steps")
+    parser.add_argument("--controlnet_path", type=str, required=True, help="ControlNet model path")
+    parser.add_argument("--denoise-strength", type=float, default=0.6, help="Denoising strength (0 to 1).")
+    parser.add_argument("--control-strength", type=float, default=1.5, help="Control strength. 1-2 seems to give good results.")
 
     args = parser.parse_args()
     train(args.data_dir, args.checkpoint_path, args.train_iterations, args.retrain_iterations)
