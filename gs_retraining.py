@@ -58,8 +58,10 @@ def perturb_transform_matrices(dataset: np.ndarray, num_transforms: int = 30, ma
         translation = transform[:3, 3]
         rotation = transform[:3, :3]
 
-        # Perturb translation
-        translation += np.random.normal(0, translation_perturb_size, size=3)
+        # Perturb translation (towards center)
+        perturbation = np.random.normal(0, translation_perturb_size, size=3)
+        perturbation *= -np.sign(perturbation @ translation)
+        translation += perturbation
 
         # Perturb rotation
         random_y_rotation = (np.random.random() * 2 - 1) * np.pi / 18
