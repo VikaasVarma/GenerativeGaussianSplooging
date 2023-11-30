@@ -1,3 +1,6 @@
+"""
+Evaluates ControlNet on the test set of a dataset. Used for evaluation and comparison to other models.
+"""
 import diffusers
 import torch
 
