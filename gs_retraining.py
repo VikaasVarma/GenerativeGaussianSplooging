@@ -108,7 +108,7 @@ def render_samples(data_dir: str, model_path: str, idx: int, strategy: str = "ra
         json.dump(_transforms, f)
 
     subprocess.Popen((
-        f"python render.py -s {transforms_file} "
+        f"python render.py -s {data_dir} "
         f"-m {model_path} "
         "--skip_test"
     ),
